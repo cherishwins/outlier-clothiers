@@ -1,0 +1,106 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Drop {
+  id                String   @id @default(cuid())
+  name              String
+  source            String
+  source_url        String?
+  pallet_cost       Float
+  box_price         Float
+  boxes_needed      Int
+  boxes_sold        Int      @default(0)
+  funding_deadline  DateTime
+  status            String   @default("funding")
+  manifest          Json
+  images            String[]
+  created_at        DateTime @default(now())
+  updated_at        DateTime @updatedAt
+  
+  orders            Order[]
+  contract_address  String?
+}
+
+model Order {
+  id                String   @id @default(cuid())
+  drop_id           String
+  drop              Drop     @relation(fields: [drop_id], references: [id])
+  
+  customer_wallet   String
+  customer_email    String?
+  customer_name     String?
+  
+  shipping_address  Json
+  shipping_cost     Float
+  tracking_number   String?
+  shipping_label_url String?
+  carrier           String?
+  
+  payment_method    String
+  payment_amount    Float
+  payment_currency  String
+  payment_tx_hash   String?
+  
+  receipt_nft_id    String?
+  receipt_nft_tx    String?
+  
+  status            String   @default("pending")
+  paid_at           DateTime?
+  shipped_at        DateTime?
+  delivered_at      DateTime?
+  customer_confirmed Boolean @default(false)
+  
+  created_at        DateTime @default(now())
+  updated_at        DateTime @updatedAt
+  
+  @@index([drop_id])
+  @@index([customer_wallet])
+  @@index([tracking_number])
+}
+
+model Pallet {
+  id                String   @id @default(cuid())
+  viatrading_id     String?
+  name              String
+  source            String
+  source_url        String
+  cost              Float
+  manifest          Json
+  condition_grade   String
+  units             Int
+  retail_value_min  Float
+  retail_value_max  Float
+  photos            String[]
+  inspection_video  String?
+  
+  status            String   @default("listed")
+  purchased_at      DateTime?
+  
+  created_at        DateTime @default(now())
+  updated_at        DateTime @updatedAt
+}
+
+model User {
+  id                String   @id @default(cuid())
+  wallet_address    String   @unique
+  telegram_id       String?  @unique
+  email             String?
+  
+  membership_tier   String   @default("public")
+  referral_code     String   @unique
+  referred_by       String?
+  
+  total_orders      Int      @default(0)
+  total_spent       Float    @default(0)
+  
+  created_at        DateTime @default(now())
+  updated_at        DateTime @updatedAt
+  
+  @@index([referral_code])
+}
