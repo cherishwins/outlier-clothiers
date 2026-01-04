@@ -25,3 +25,7 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# CDP API keys
+cdp_api_key*.json
+cdp_wallet_secret.txt

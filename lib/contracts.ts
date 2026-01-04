@@ -6,14 +6,19 @@ import { privateKeyToAccount } from 'viem/accounts'
 export const CONTRACTS = {
   // Base Sepolia (testnet)
   baseSepolia: {
-    flashCargo: '' as `0x${string}`, // Deploy and fill in
+    flashCargo: '0x298930319B3c17e3A83Ed12E338B6d2D58752dFE' as `0x${string}`, // Deployed Jan 3, 2026
     usdc: '0x036CbD53842c5426634e7929541eC2318f3dCF7e' as `0x${string}`, // Base Sepolia USDC
   },
-  // Base Mainnet
+  // Base Mainnet - Deployed Jan 4, 2026
   base: {
-    flashCargo: '' as `0x${string}`, // Deploy and fill in
+    flashCargo: '0xe6ec66d9b2caf0873bdf1499791c5d6f8a83f956' as `0x${string}`,
     usdc: '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913' as `0x${string}`, // Base USDC
   },
+}
+
+// Check if mainnet contract is configured
+export function isMainnetReady(): boolean {
+  return CONTRACTS.base.flashCargo !== '' && CONTRACTS.base.flashCargo.length === 42
 }
 
 // FlashCargo ABI (minimal for frontend)

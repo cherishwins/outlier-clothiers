@@ -4,14 +4,18 @@
   "private": true,
   "scripts": {
     "build": "next build",
+    "dev": "next dev",
+    "start": "next start",
+    "lint": "eslint .",
     "db:generate": "prisma generate",
     "db:push": "prisma db push",
     "db:studio": "prisma studio",
-    "dev": "next dev",
-    "lint": "eslint .",
-    "start": "next start"
+    "deploy:contract": "npx ts-node scripts/deploy-cdp.ts",
+    "deploy:contract:testnet": "NEXT_PUBLIC_TESTNET=true npx ts-node scripts/deploy-testnet.ts"
   },
   "dependencies": {
+    "@coinbase/agentkit": "^0.10.4",
+    "@coinbase/cdp-sdk": "^1.40.1",
     "@hookform/resolvers": "^3.10.0",
     "@prisma/client": "^6.2.0",
     "@radix-ui/react-accordion": "1.2.2",

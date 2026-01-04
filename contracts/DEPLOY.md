@@ -1,29 +1,14 @@
 # FlashCargo Contract Deployment
 
-## Deployer Wallet (Testnet Only)
-```
-Address: 0xa58740136d8880d74cb5426B988d297273AC579e
-Private Key: 0x66f8138861f13ea6de810493c004e71957b1d7442d3be5aaab197ae2b58854c6
-```
+## Deployment
 
-## Step 1: Get Testnet ETH
+Using CDP SDK with secure wallet management. See `scripts/deploy-cdp.ts`.
 
-Get ~0.01 ETH from the Base Sepolia faucet:
-https://www.coinbase.com/faucets/base-ethereum-sepolia-faucet
-
-Paste address: `0xa58740136d8880d74cb5426B988d297273AC579e`
-
-## Step 2: Deploy Contract
+CDP Wallet: `0xd9dD6AF0ceE2ddD9f36B29528C0222b21E8Cde73` (Base mainnet)
 
 ```bash
-cd contracts
-
-# Deploy to Base Sepolia
-~/.foundry/bin/forge create \
-  --rpc-url https://sepolia.base.org \
-  --private-key 0x66f8138861f13ea6de810493c004e71957b1d7442d3be5aaab197ae2b58854c6 \
-  src/FlashCargo.sol:FlashCargo \
-  --constructor-args 0x036CbD53842c5426634e7929541eC2318f3dCF7e
+# Deploy to Base mainnet
+npm run deploy:cdp
 ```
 
 ## Step 3: Update Contract Address

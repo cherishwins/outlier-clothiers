@@ -1,21 +1,193 @@
 import { type NextRequest, NextResponse } from "next/server"
 
+const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN
+
+interface TelegramPaymentRequest {
+  productName: string
+  stars: number // Price in Telegram Stars
+  ton?: number // Optional TON price
+  // Order metadata
+  dropId?: number
+  quantity?: number
+  boxType?: "small" | "medium" | "large"
+  customerTelegramId?: number
+  customerEmail?: string
+  shippingAddress?: object
+}
+
+// Box prices in Stars (1 Star ≈ $0.01)
+const BOX_PRICES_STARS = {
+  small: 1500, // $15
+  medium: 3500, // $35
+  large: 7000, // $70
+}
+
 export async function POST(request: NextRequest) {
   try {
-    const { productName, stars, ton } = await request.json()
+    const body: TelegramPaymentRequest = await request.json()
+    const {
+      productName,
+      stars,
+      dropId,
+      quantity = 1,
+      boxType = "medium",
+      customerTelegramId,
+      customerEmail,
+      shippingAddress,
+    } = body
 
-    // Telegram payment integration
-    // This would integrate with Telegram Bot API for Stars/TON payments
-    // For now, return payment link
+    // Calculate total Stars
+    const totalStars = stars || BOX_PRICES_STARS[boxType] * quantity
+
+    // Build invoice payload (will be passed back in webhook)
+    const invoicePayload = JSON.stringify({
+      dropId: dropId || 0,
+      quantity,
+      boxType,
+      customerTelegramId,
+      customerEmail,
+      shippingAddress,
+    })
+
+    // If we have a Telegram user ID, create an invoice link
+    if (customerTelegramId && BOT_TOKEN) {
+      const invoiceLink = await createTelegramInvoice({
+        chatId: customerTelegramId,
+        title: productName,
+        description: `OUTLIER CLOTHIERS Mystery Box - ${boxType.toUpperCase()} (${quantity}x)`,
+        payload: invoicePayload,
+        currency: "XTR", // Telegram Stars
+        prices: [{ label: productName, amount: totalStars }],
+      })
+
+      if (invoiceLink) {
+        return NextResponse.json({
+          success: true,
+          payment_type: "stars",
+          invoice_url: invoiceLink,
+          stars: totalStars,
+        })
+      }
+    }
+
+    // Fallback: Return bot deep link for manual payment
+    const botUsername = process.env.TELEGRAM_BOT_USERNAME || "OutlierClothiersBot"
+    const paymentUrl = `https://t.me/${botUsername}?start=pay_${boxType}_${quantity}_${dropId || 0}`
 
     return NextResponse.json({
       success: true,
-      payment_url: `https://t.me/OutlierClothiersBot?start=pay_${stars}_${encodeURIComponent(productName)}`,
-      stars,
-      ton,
+      payment_type: "deeplink",
+      payment_url: paymentUrl,
+      stars: totalStars,
+      instructions: "Open the link in Telegram to complete payment with Stars",
     })
   } catch (error) {
-    console.error("Telegram payment error:", error)
-    return NextResponse.json({ success: false, error: "Payment failed" }, { status: 500 })
+    console.error("[Telegram] Payment error:", error)
+    return NextResponse.json(
+      { success: false, error: "Payment failed" },
+      { status: 500 }
+    )
   }
+}
+
+// Create Telegram invoice using Bot API
+async function createTelegramInvoice(params: {
+  chatId: number
+  title: string
+  description: string
+  payload: string
+  currency: string
+  prices: Array<{ label: string; amount: number }>
+}): Promise<string | null> {
+  if (!BOT_TOKEN) return null
+
+  try {
+    // Create invoice link
+    const response = await fetch(
+      `https://api.telegram.org/bot${BOT_TOKEN}/createInvoiceLink`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          title: params.title,
+          description: params.description,
+          payload: params.payload,
+          provider_token: "", // Empty for Telegram Stars
+          currency: params.currency,
+          prices: params.prices,
+          need_shipping_address: true,
+          need_email: true,
+          is_flexible: false,
+        }),
+      }
+    )
+
+    const data = await response.json()
+    if (data.ok) {
+      return data.result
+    }
+
+    console.error("[Telegram] Invoice creation failed:", data)
+    return null
+  } catch (error) {
+    console.error("[Telegram] Invoice error:", error)
+    return null
+  }
+}
+
+// Send invoice directly to a chat
+export async function sendInvoiceToChat(chatId: number, params: {
+  title: string
+  description: string
+  payload: string
+  prices: Array<{ label: string; amount: number }>
+}): Promise<boolean> {
+  if (!BOT_TOKEN) return false
+
+  try {
+    const response = await fetch(
+      `https://api.telegram.org/bot${BOT_TOKEN}/sendInvoice`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          chat_id: chatId,
+          title: params.title,
+          description: params.description,
+          payload: params.payload,
+          provider_token: "", // Empty for Telegram Stars
+          currency: "XTR",
+          prices: params.prices,
+          need_shipping_address: true,
+          need_email: true,
+        }),
+      }
+    )
+
+    const data = await response.json()
+    return data.ok
+  } catch (error) {
+    console.error("[Telegram] Send invoice error:", error)
+    return false
+  }
+}
+
+// GET endpoint for info
+export async function GET() {
+  return NextResponse.json({
+    status: "Telegram Payment API Active",
+    supported_currencies: ["XTR (Telegram Stars)"],
+    box_prices_stars: BOX_PRICES_STARS,
+    usage: {
+      POST: "Create payment invoice",
+      params: {
+        productName: "Product name",
+        stars: "Price in Stars (optional, calculated from boxType)",
+        dropId: "Drop ID",
+        quantity: "Number of boxes",
+        boxType: "small | medium | large",
+        customerTelegramId: "User's Telegram ID (for direct invoice)",
+      },
+    },
+  })
 }
