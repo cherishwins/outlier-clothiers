@@ -1,184 +1,163 @@
 # LAUNCH CHECKLIST
 
-Complete this checklist before going live.
+Last updated: January 4, 2026
 
-## Pre-Launch Setup
+## COMPLETED ✅
+
+### Smart Contract & Blockchain
+- [x] FlashCargo contract deployed to Base Sepolia (testnet)
+- [x] FlashCargo contract deployed to Base Mainnet: `0xe6ec66d9b2caf0873bdf1499791c5d6f8a83f956`
+- [x] Contract addresses configured in lib/contracts.ts
+- [x] USDC integration (Base mainnet: 0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913)
+
+### Payment Infrastructure
+- [x] x402 Protocol endpoint (`/api/payment/x402`)
+- [x] Coinbase Commerce endpoint (`/api/payment/coinbase`)
+- [x] Telegram Stars endpoint (`/api/payment/telegram`)
+- [x] Webhook handlers for all payment methods
+- [x] Settlement service (lib/settlement.ts)
+- [x] Payment verification on-chain (lib/payment-verification.ts)
+- [x] CDP wallet integration for server-side ops
+
+### Frontend & UI
+- [x] Landing page with hero
+- [x] Drops page (mystery box marketplace)
+- [x] Pallets page (funding tracker)
+- [x] Juche page (VIP membership)
+- [x] Admin dashboard
+- [x] Checkout flow
+- [x] Wallet connection (Wagmi/Viem)
+
+### Database
+- [x] Prisma schema defined
+- [x] Drop, Order, User, Pallet models
+
+---
+
+## NEXT STEPS TO REVENUE 🚀
+
+### CRITICAL PATH (Do These First)
+
+#### Step 1: Deploy to Vercel (15 min)
+```bash
+git push origin main  # Already done!
+```
+Then in Vercel:
+1. Go to vercel.com/new
+2. Import `cherishwins/outlier-clothiers`
+3. Deploy
+
+#### Step 2: Set Environment Variables (10 min)
+In Vercel dashboard → Settings → Environment Variables:
+```
+NEXT_PUBLIC_APP_URL=https://outlierclothiers.com
+NEXT_PUBLIC_TESTNET=false
+
+# Database
+DATABASE_URL=postgresql://...
+
+# Payments
+COINBASE_COMMERCE_API_KEY=xxx
+COINBASE_COMMERCE_WEBHOOK_SECRET=xxx
+
+# Telegram
+TELEGRAM_BOT_TOKEN=8074239038:AAFk7vlJay2uTKlCJbiSHPb0SDHp-t4rEhE
+
+# CDP (for server-side contract calls)
+CDP_API_KEY_ID=xxx
+CDP_API_KEY_SECRET=xxx
+```
+
+#### Step 3: Set Up Database (15 min)
+Option A: Supabase (free tier)
+1. Create project at supabase.com
+2. Get connection string
+3. Add to Vercel env vars
+4. Run: `npx prisma db push`
+
+Option B: Neon (free tier)
+1. Create project at neon.tech
+2. Same steps
+
+#### Step 4: Connect Domain (5 min)
+In Vercel → Domains:
+1. Add `outlierclothiers.com`
+2. Update DNS at registrar:
+   - CNAME → cname.vercel-dns.com
+
+---
+
+## MAKING MONEY (After Above Steps)
+
+### Day 1: Create First Drop
+1. Get manifest from ViaTrading
+2. Create drop via admin or directly in database
+3. Set funding target, deadline, slot prices
+
+### Day 2: Announce on Telegram
+1. Post drop to JUCHE GANG group
+2. Share funding link
+3. Respond to all questions
+
+### Day 3-5: Monitor & Promote
+- Track funding progress
+- Share updates
+- Push to crypto Twitter
+
+### Day 6: If Funded
+- Buy pallet
+- Ship mystery boxes
+- Collect testimonials
+
+---
+
+## REMAINING SETUP (Nice to Have)
 
 ### Legal & Business
 - [ ] Register business entity (LLC or Corp)
 - [ ] Get business bank account
-- [ ] Set up accounting system (QuickBooks, Wave)
-- [ ] Consult lawyer on liquidation/resale laws
-- [ ] Get business insurance ($500-1K/year)
-- [ ] Apply for import/export license (if needed)
-
-### Payment Infrastructure
-- [ ] Create Coinbase Commerce account
-- [ ] Verify Coinbase Commerce API key works
-- [ ] Set up crypto wallet for x402 (Base network)
-- [ ] Fund wallet with gas ($50-100 in ETH)
-- [ ] Create Telegram bot (@BotFather)
-- [ ] Enable Telegram Stars payments
-- [ ] Test all 3 payment methods end-to-end
-
-### Platform Setup
-- [ ] Deploy app to Vercel
-- [ ] Connect custom domain (outlierclothiers.com)
-- [ ] Add SSL certificate (auto via Vercel)
-- [ ] Set all environment variables
-- [ ] Test app on mobile (Telegram WebView)
-- [ ] Enable analytics (PostHog, Mixpanel, or GA4)
-- [ ] Set up error tracking (Sentry)
+- [ ] Set up accounting system
+- [ ] Get business insurance
 
 ### Telegram Setup
 - [ ] Create Telegram channel (@OutlierClothiers)
 - [ ] Create Telegram group (JUCHE GANG)
-- [ ] Set bot commands (/drops, /pallets, etc.)
-- [ ] Upload bot profile picture
-- [ ] Write channel description
 - [ ] Configure Mini App in @BotFather
 - [ ] Set webhook URL for bot
-- [ ] Test bot commands
 
 ### Social Media
-- [ ] Secure Twitter/X handle (@OutlierClothiers)
-- [ ] Secure Instagram handle (@outlier.clothiers)
-- [ ] Create TikTok account (@outlierclothiers)
-- [ ] Design profile pictures (512x512)
-- [ ] Write bio/descriptions
-- [ ] Create content calendar (30 days)
-- [ ] Prepare 10 posts in advance
+- [ ] Twitter/X (@OutlierClothiers)
+- [ ] Instagram (@outlier.clothiers)
+- [ ] TikTok (@outlierclothiers)
 
-### Content Creation
-- [ ] Film brand introduction video (30-60s)
-- [ ] Create "How It Works" explainer
-- [ ] Design social media post templates
-- [ ] Write email templates
-- [ ] Create Telegram message templates
-- [ ] Prepare FAQ document
-
-### Sourcing First Pallet
-- [ ] Browse ViaTrading for manifested pallets
-- [ ] Find pallet under $1,000 (minimize risk)
-- [ ] Verify manifest shows retail values
-- [ ] Calculate profitability (3x minimum)
-- [ ] Take screenshots for marketing
-- [ ] Prepare pallet description
-
-## Launch Week
-
-### Day 1: Soft Launch
-- [ ] Invite 20 friends/family to JUCHE GANG group
-- [ ] Share business model transparently
-- [ ] Ask for feedback on first pallet idea
-- [ ] Test referral program with early adopters
-
-### Day 2: Community Building
-- [ ] Join 20 Telegram crypto groups
-- [ ] Introduce yourself (not spammy)
-- [ ] Offer value (share liquidation tips)
-- [ ] DM interested people with invite link
-- [ ] Goal: 50 group members
-
-### Day 3: Content Blitz
-- [ ] Post on Twitter/X (introduce brand)
-- [ ] Post on Instagram (brand story)
-- [ ] Create TikTok account announcement
-- [ ] Share in relevant Reddit subs (r/flipping, r/cryptocurrency)
-- [ ] Email list announcement (if you have one)
-
-### Day 4: First Drop Prep
-- [ ] Create drop listing in app
-- [ ] Upload manifest
-- [ ] Set funding goal
-- [ ] Set deadline (72 hours)
-- [ ] Prepare announcement graphics
-
-### Day 5: LAUNCH DAY 🚀
-- [ ] 9am: Announce in JUCHE GANG group
-- [ ] 10am: Post on Twitter/X
-- [ ] 11am: Post on Instagram
-- [ ] 12pm: Share in crypto Telegram groups
-- [ ] 3pm: Funding progress update
-- [ ] 6pm: Urgency post ("50% funded!")
-- [ ] 9pm: Final push post
-
-### Day 6-7: Monitor & Engage
-- [ ] Respond to all DMs within 2 hours
-- [ ] Share customer comments/testimonials
-- [ ] Post funding progress every 6 hours
-- [ ] Engage with everyone who comments
-- [ ] Document everything (for content)
-
-## Post-Launch (Week 2)
-
-### If Drop Funded ✅
-- [ ] Buy pallet immediately
-- [ ] Announce purchase in group
-- [ ] Share receipt/tracking
-- [ ] Document pallet arrival
-- [ ] Pack all boxes carefully
-- [ ] Ship within 3-5 days of pallet arrival
-- [ ] Send tracking numbers to all customers
-- [ ] Ask for unboxing videos
-
-### If Drop Not Funded ❌
-- [ ] Announce refunds in group
-- [ ] Process all refunds within 24 hours
-- [ ] Ask for feedback (why didn't they buy?)
-- [ ] Adjust strategy:
-  - Lower box price?
-  - Better pallet?
-  - More trust-building content?
-- [ ] Try again in 7 days
-
-### Customer Delivery
-- [ ] Message customers when tracking shows delivery
-- [ ] Ask for unboxing video (offer incentive)
-- [ ] Request testimonial/review
-- [ ] Offer 10% off next drop
-- [ ] Thank them publicly in group
-
-### Continuous Improvement
-- [ ] Analyze what worked/didn't work
-- [ ] Survey customers for next pallet preferences
-- [ ] Improve website based on feedback
-- [ ] Optimize payment flow (reduce friction)
-- [ ] Plan next 3 drops in advance
-
-## Metrics to Track
-
-### Week 1 Goals
-- [ ] 100 Telegram group members
-- [ ] 50 Twitter followers
-- [ ] 30 Instagram followers
-- [ ] 1 drop fully funded
-- [ ] $1,000+ revenue
-
-### Month 1 Goals
-- [ ] 500 Telegram group members
-- [ ] 5 successful drops
-- [ ] $10,000 revenue
-- [ ] $5,000 profit
-- [ ] 20+ customer testimonials
-
-### Month 3 Goals
-- [ ] 2,000 Telegram group members
-- [ ] 15 successful drops
-- [ ] $50,000 revenue
-- [ ] $25,000 profit
-- [ ] Featured in crypto media
-
-## Emergency Contacts
-
-Keep these handy:
-
-- **Customs Issues**: [Your customs broker]
-- **Payment Issues**: Coinbase Commerce support
-- **Legal Issues**: [Your lawyer]
-- **Shipping Issues**: [Your 3PL or courier]
-- **Tech Issues**: Vercel support
+### Analytics & Monitoring
+- [ ] Sentry for error tracking
+- [ ] PostHog or GA4 for analytics
 
 ---
 
-**YOU GOT THIS.** Launch fast, iterate faster. Let's fucking win.
+## QUICK REVENUE TARGETS
+
+| Milestone | Target | Status |
+|-----------|--------|--------|
+| Contract deployed | ✓ | DONE |
+| App deployed | Vercel | NEXT |
+| Database ready | Postgres | NEXT |
+| First drop live | 1 drop | This week |
+| First sale | $50+ | This week |
+| First pallet funded | $500+ | Week 1 |
+
+---
+
+## YOUR WALLET BALANCES
+
+| Wallet | Network | Balance | Purpose |
+|--------|---------|---------|---------|
+| MetaMask (0xc3B...46d7) | Base | ~0.006 ETH | Future gas |
+| MetaMask (0xc3B...46d7) | Ethereum | 0 ETH | - |
+| CDP (0xd9d...73) | Ethereum | ~0.003 ETH | Can bridge |
+| CDP (0xd9d...73) | Base | 0 ETH | - |
+
+---
+
+**YOU'RE 90% THERE.** Vercel deploy + database + first drop = money.
