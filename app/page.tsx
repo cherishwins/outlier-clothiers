@@ -253,15 +253,17 @@ export default function Home() {
             Join the Telegram. Get first access to drops. Build with us.
           </p>
 
-          <Button
-            size="lg"
-            className="text-xl px-12 py-8 bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 text-black font-bold shadow-[0_0_50px_rgba(212,175,55,0.5)] hover:shadow-[0_0_80px_rgba(212,175,55,0.7)] transition-all duration-300"
-          >
-            <svg className="w-6 h-6 mr-3" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.562 8.161c-.18.717-.962 4.084-1.362 5.423-.168.564-.505 1.074-.996 1.074-.853 0-1.195-.79-1.856-1.247-.938-.647-1.469-1.05-2.381-1.682-.105-.073-.241-.18-.241-.314 0-.18.165-.285.285-.375.96-.717 2.222-1.983 2.402-2.167.18-.18.045-.285-.135-.18-.646.42-2.927 1.86-3.48 2.205-.553.345-1.05.511-1.86.27-.855-.255-1.673-.527-2.235-.707-.39-.12-.855-.36-.75-.735.045-.18.315-.36.63-.54C6.952 8.558 9.48 7.41 14.325 5.43c.495-.195 2.7-1.125 2.775-.045.03.405-.135 1.695-.538 2.776z"/>
-            </svg>
-            JOIN TELEGRAM
-          </Button>
+          <a href="https://t.me/JucheGang" target="_blank" rel="noopener noreferrer">
+            <Button
+              size="lg"
+              className="text-xl px-12 py-8 bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 text-black font-bold shadow-[0_0_50px_rgba(212,175,55,0.5)] hover:shadow-[0_0_80px_rgba(212,175,55,0.7)] transition-all duration-300"
+            >
+              <svg className="w-6 h-6 mr-3" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.562 8.161c-.18.717-.962 4.084-1.362 5.423-.168.564-.505 1.074-.996 1.074-.853 0-1.195-.79-1.856-1.247-.938-.647-1.469-1.05-2.381-1.682-.105-.073-.241-.18-.241-.314 0-.18.165-.285.285-.375.96-.717 2.222-1.983 2.402-2.167.18-.18.045-.285-.135-.18-.646.42-2.927 1.86-3.48 2.205-.553.345-1.05.511-1.86.27-.855-.255-1.673-.527-2.235-.707-.39-.12-.855-.36-.75-.735.045-.18.315-.36.63-.54C6.952 8.558 9.48 7.41 14.325 5.43c.495-.195 2.7-1.125 2.775-.045.03.405-.135 1.695-.538 2.776z"/>
+              </svg>
+              JOIN TELEGRAM
+            </Button>
+          </a>
 
           <p className="mt-8 text-sm text-muted-foreground">
             Pay with <span className="text-primary">Telegram Stars</span> • <span className="text-primary">TON</span> • <span className="text-primary">USDC</span>

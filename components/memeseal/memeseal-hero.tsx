@@ -1,5 +1,3 @@
-"use client"
-
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Stamp, Trophy } from "lucide-react"
@@ -42,17 +40,21 @@ export function MemesealHero() {
 
         {/* CTAs */}
         <div className="flex flex-col sm:flex-row gap-4 justify-center mb-16">
-          <Button size="lg" className="text-lg px-8 py-6 bg-green-500 hover:bg-green-600 text-black font-bold">
-            <Stamp className="w-5 h-5 mr-2" />
-            START SEALING
-          </Button>
-          <Button
-            size="lg"
-            variant="outline"
-            className="text-lg px-8 py-6 border-green-500/30 hover:border-green-500 bg-transparent"
-          >
-            View Lottery Pot
-          </Button>
+          <a href="https://t.me/MemeSealTON_bot" target="_blank" rel="noopener noreferrer">
+            <Button size="lg" className="text-lg px-8 py-6 bg-green-500 hover:bg-green-600 text-black font-bold">
+              <Stamp className="w-5 h-5 mr-2" />
+              START SEALING
+            </Button>
+          </a>
+          <a href="https://notaryton.com" target="_blank" rel="noopener noreferrer">
+            <Button
+              size="lg"
+              variant="outline"
+              className="text-lg px-8 py-6 border-green-500/30 hover:border-green-500 bg-transparent"
+            >
+              View Lottery Pot
+            </Button>
+          </a>
         </div>
 
         {/* Quick stats */}

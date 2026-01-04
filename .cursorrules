@@ -1,0 +1,172 @@
+# OUTLIER CLOTHIERS - Cursor AI Rules
+
+You are an expert in TypeScript, Node.js, Next.js 16 App Router, React 19, TailwindCSS v4, Radix UI, Prisma, and blockchain development with Viem/Wagmi.
+
+## Project Context
+
+This is **Outlier Clothiers** - a crypto-native Flash DAO for luxury liquidation. We crowdfund manifested pallets, sell mystery boxes at 80% off retail, with zero inventory risk via smart contract escrow.
+
+**Domain:** outlierclothiers.com
+**Tech Stack:** Next.js 16, React 19, TailwindCSS v4, Prisma, Base L2, x402 Protocol
+**Payment Rails:** x402 (USDC), Telegram Stars, TON, Coinbase Commerce
+
+## Code Style and Structure
+
+### TypeScript
+- Write concise, technical TypeScript with accurate examples
+- Use functional and declarative programming patterns
+- Avoid classes; prefer functions and hooks
+- Use descriptive variable names with auxiliary verbs (e.g., `isLoading`, `hasError`, `canSubmit`)
+- Always use TypeScript interfaces over types; avoid enums, use const maps instead
+
+### File Organization
+```
+// Structure files in this order:
+1. Exported component
+2. Subcomponents
+3. Helper functions
+4. Static content / constants
+5. Types and interfaces
+```
+
+### Naming Conventions
+- Use lowercase with dashes for directories: `components/payment-modal`
+- Use PascalCase for component files: `PaymentModal.tsx`
+- Favor named exports over default exports
+- Prefix event handlers with `handle`: `handlePayment`, `handleSlotPurchase`
+
+## Next.js 16 Patterns
+
+### App Router
+- Use App Router file conventions: `page.tsx`, `layout.tsx`, `loading.tsx`, `error.tsx`
+- Prefer React Server Components (RSC) - minimize `'use client'`
+- Colocate related files in route directories
+
+### Data Fetching
+- Use Server Components for data fetching when possible
+- Use `@tanstack/react-query` for client-side state
+- Implement proper loading and error states with Suspense boundaries
+
+### Performance
+- Minimize `'use client'`, `useEffect`, and `useState`
+- Wrap client components in `Suspense` with fallback
+- Use `next/dynamic` for non-critical components
+- Optimize images: WebP format, lazy loading, proper sizing
+
+## UI and Styling
+
+### TailwindCSS v4
+- Use Tailwind for all styling
+- Follow mobile-first responsive design
+- Use the project's design tokens (gold/black theme with `primary` color)
+- Prefer `cn()` utility for conditional classes
+
+### Components
+- Build on Radix UI primitives (already in `components/ui/`)
+- Follow the existing component patterns in the codebase
+- Keep components small and focused
+
+### Design System
+```typescript
+// Primary brand colors
+primary: #D4AF37 (Gold)
+background: #0a0a0a (Near-black)
+card: #1a1a1a (Dark gray)
+```
+
+## Payment Integration
+
+### x402 Protocol
+```typescript
+// Always return HTTP 402 for payment endpoints
+return NextResponse.json({
+  amount,
+  currency: "USDC",
+  address: process.env.X402_PAYMENT_ADDRESS,
+  network: "base",
+}, { status: 402 })
+```
+
+### Blockchain
+- Use `viem` for low-level blockchain operations
+- Use `wagmi` for React hooks and wallet connection
+- Target Base L2 for low gas fees
+- Always handle transaction errors gracefully
+
+### Smart Contracts
+- Follow the FlashCargo escrow pattern: crowdfund → release or refund
+- Mint NFT receipts for order claims
+- Use USDC (6 decimals) for payments
+
+## Database (Prisma)
+
+- Use Prisma for all database operations
+- Follow the existing schema in `prisma/schema.prisma`
+- Use transactions for multi-step operations
+- Index frequently queried fields
+
+## Security
+
+- Never expose API keys in client code
+- Validate all user input with Zod
+- Use environment variables for secrets
+- Implement rate limiting on API routes
+- Never trust client-side wallet addresses without verification
+
+## Error Handling
+
+- Use proper try/catch blocks
+- Return consistent error response shapes
+- Log errors server-side with context
+- Show user-friendly error messages
+
+## Testing
+
+- Write tests for critical payment flows
+- Test smart contract interactions on testnet first
+- Validate x402 payment headers
+
+## Git Commit Style
+
+Use conventional commits:
+```
+feat: add tiered pricing to FlashCargo contract
+fix: correct USDC decimal handling in buySlot
+docs: update README with x402 payment flow
+refactor: extract payment modal into separate component
+```
+
+## Key Business Logic
+
+### Flash DAO Flow
+1. Pallet listed with manifest visible
+2. Customers buy slots via x402/Stars/TON
+3. Funds held in smart contract escrow
+4. Threshold reached → funds released → pallet purchased
+5. Threshold missed → auto-refund all buyers
+6. Orders fulfilled → NFT receipts burned
+
+### Tiered Pricing
+```typescript
+function getPrice(sold: number): number {
+  if (sold < 500) return 70   // First 500 slots: $70
+  if (sold < 800) return 100  // Next 300 slots: $100
+  return 130                   // Last 200 slots: $130
+}
+```
+
+## Do NOT
+
+- Add features without reading the existing codebase first
+- Create new UI components when Radix primitives exist
+- Use `any` type - always define proper interfaces
+- Hardcode payment addresses - use environment variables
+- Skip error handling in payment flows
+- Deploy to mainnet without testnet verification
+
+## When Uncertain
+
+- Check existing patterns in `components/` and `app/`
+- Reference the ARCHITECTURE.md for system design
+- Look at the Prisma schema for data models
+- Test payment flows in development with console logging

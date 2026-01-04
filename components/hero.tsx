@@ -1,5 +1,6 @@
 "use client"
 
+import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Sparkles, Clock } from "lucide-react"
 import Image from "next/image"
@@ -56,17 +57,21 @@ export function Hero() {
 
         {/* CTAs */}
         <div className="flex flex-col sm:flex-row gap-4 justify-center items-center animate-fade-in animation-delay-800">
-          <Button size="lg" className="text-lg px-8 py-6 bg-primary hover:bg-primary/90 text-primary-foreground group">
-            <Sparkles className="w-5 h-5 mr-2 group-hover:rotate-12 transition-transform" />
-            Join Waitlist
-          </Button>
-          <Button
-            size="lg"
-            variant="outline"
-            className="text-lg px-8 py-6 border-primary/30 hover:border-primary hover:bg-primary/10 bg-transparent"
-          >
-            View Collection
-          </Button>
+          <a href="https://t.me/JucheGang" target="_blank" rel="noopener noreferrer">
+            <Button size="lg" className="text-lg px-8 py-6 bg-primary hover:bg-primary/90 text-primary-foreground group">
+              <Sparkles className="w-5 h-5 mr-2 group-hover:rotate-12 transition-transform" />
+              Join Waitlist
+            </Button>
+          </a>
+          <Link href="/drops">
+            <Button
+              size="lg"
+              variant="outline"
+              className="text-lg px-8 py-6 border-primary/30 hover:border-primary hover:bg-primary/10 bg-transparent"
+            >
+              View Collection
+            </Button>
+          </Link>
         </div>
 
         {/* Stats */}

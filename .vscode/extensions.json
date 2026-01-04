@@ -1,0 +1,40 @@
+{
+  "recommendations": [
+    // Core
+    "dbaeumer.vscode-eslint",
+    "esbenp.prettier-vscode",
+
+    // TypeScript/JavaScript
+    "ms-vscode.vscode-typescript-next",
+
+    // React/Next.js
+    "dsznajder.es7-react-js-snippets",
+    "formulahendry.auto-rename-tag",
+
+    // Tailwind CSS
+    "bradlc.vscode-tailwindcss",
+
+    // Prisma
+    "Prisma.prisma",
+
+    // Git
+    "eamodio.gitlens",
+    "mhutchie.git-graph",
+
+    // Utilities
+    "christian-kohler.path-intellisense",
+    "usernamehw.errorlens",
+    "streetsidesoftware.code-spell-checker",
+
+    // Icons & Theme
+    "PKief.material-icon-theme",
+
+    // AI (Cursor has built-in, but these help VSCode)
+    "continue.continue",
+
+    // Blockchain (optional)
+    "JuanBlanco.solidity",
+    "tintinweb.solidity-visual-auditor"
+  ],
+  "unwantedRecommendations": []
+}

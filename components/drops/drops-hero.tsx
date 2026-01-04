@@ -1,5 +1,3 @@
-"use client"
-
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Package, TrendingUp } from "lucide-react"
@@ -41,18 +39,22 @@ export function DropsHero() {
         </p>
 
         <div className="flex flex-col sm:flex-row gap-4 justify-center mb-16">
-          <Button size="lg" className="text-lg px-8 py-6 bg-primary hover:bg-primary/90 text-primary-foreground">
-            <Package className="w-5 h-5 mr-2" />
-            Browse Active Drops
-          </Button>
-          <Button
-            size="lg"
-            variant="outline"
-            className="text-lg px-8 py-6 border-primary/30 hover:border-primary hover:bg-primary/10 bg-transparent"
-          >
-            <TrendingUp className="w-5 h-5 mr-2" />
-            See Past Unboxings
-          </Button>
+          <a href="#active-drops">
+            <Button size="lg" className="text-lg px-8 py-6 bg-primary hover:bg-primary/90 text-primary-foreground">
+              <Package className="w-5 h-5 mr-2" />
+              Browse Active Drops
+            </Button>
+          </a>
+          <a href="https://t.me/JucheGang" target="_blank" rel="noopener noreferrer">
+            <Button
+              size="lg"
+              variant="outline"
+              className="text-lg px-8 py-6 border-primary/30 hover:border-primary hover:bg-primary/10 bg-transparent"
+            >
+              <TrendingUp className="w-5 h-5 mr-2" />
+              See Past Unboxings
+            </Button>
+          </a>
         </div>
 
         <div className="grid grid-cols-3 gap-8 max-w-3xl mx-auto">

@@ -1,5 +1,4 @@
-"use client"
-
+import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -124,7 +123,9 @@ export function FeaturedDrop() {
                 </div>
 
                 {/* CTA */}
-                <Button className="w-full bg-primary hover:bg-primary/90 text-primary-foreground">Claim Now</Button>
+                <a href="https://t.me/JucheGang" target="_blank" rel="noopener noreferrer">
+                  <Button className="w-full bg-primary hover:bg-primary/90 text-primary-foreground">Claim Now</Button>
+                </a>
               </div>
             </Card>
           ))}
@@ -132,13 +133,15 @@ export function FeaturedDrop() {
 
         {/* View All */}
         <div className="text-center mt-12">
-          <Button
-            variant="outline"
-            size="lg"
-            className="border-primary/30 hover:border-primary hover:bg-primary/10 bg-transparent"
-          >
-            View Full Collection
-          </Button>
+          <Link href="/drops">
+            <Button
+              variant="outline"
+              size="lg"
+              className="border-primary/30 hover:border-primary hover:bg-primary/10 bg-transparent"
+            >
+              View Full Collection
+            </Button>
+          </Link>
         </div>
       </div>
     </section>
