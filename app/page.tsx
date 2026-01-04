@@ -253,7 +253,7 @@ export default function Home() {
             Join the Telegram. Get first access to drops. Build with us.
           </p>
 
-          <a href="https://t.me/JucheGang" target="_blank" rel="noopener noreferrer">
+          <a href="https://t.me/OutlierClothiersBot" target="_blank" rel="noopener noreferrer">
             <Button
               size="lg"
               className="text-xl px-12 py-8 bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 text-black font-bold shadow-[0_0_50px_rgba(212,175,55,0.5)] hover:shadow-[0_0_80px_rgba(212,175,55,0.7)] transition-all duration-300"

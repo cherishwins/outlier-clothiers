@@ -123,7 +123,7 @@ export function FeaturedDrop() {
                 </div>
 
                 {/* CTA */}
-                <a href="https://t.me/JucheGang" target="_blank" rel="noopener noreferrer">
+                <a href="https://t.me/OutlierClothiersBot" target="_blank" rel="noopener noreferrer">
                   <Button className="w-full bg-primary hover:bg-primary/90 text-primary-foreground">Claim Now</Button>
                 </a>
               </div>

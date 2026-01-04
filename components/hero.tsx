@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
-import { Sparkles, Clock } from "lucide-react"
+import { Sparkles, Clock, Package, Shield, Zap } from "lucide-react"
 import Image from "next/image"
 import { CountdownTimer } from "./countdown-timer"
 
@@ -23,7 +23,7 @@ export function Hero() {
         <div className="flex justify-center mb-8 animate-fade-in">
           <Image
             src="/wordmark.png"
-            alt="JUCHE GANG"
+            alt="Outlier Clothiers"
             width={600}
             height={200}
             className="w-full max-w-2xl h-auto"
@@ -33,34 +33,49 @@ export function Hero() {
 
         {/* Tagline */}
         <h1 className="font-serif text-5xl md:text-7xl lg:text-8xl font-bold mb-6 text-balance animate-fade-in animation-delay-200">
-          <span className="text-foreground">Creation Without</span>
+          <span className="text-foreground">Luxury for</span>
           <br />
-          <span className="text-primary">Limitation</span>
+          <span className="text-primary">80% Off</span>
         </h1>
 
-        <p className="text-xl md:text-2xl text-muted-foreground mb-12 max-w-2xl mx-auto text-pretty animate-fade-in animation-delay-400">
-          {
-            "Exclusive streetwear drops for the Telegram generation. Limited quantities. Premium quality. Accept Stars & TON."
-          }
+        <p className="text-xl md:text-2xl text-muted-foreground mb-8 max-w-2xl mx-auto text-pretty animate-fade-in animation-delay-400">
+          We crowdfund liquidation pallets and split the treasure.
+          Real brands. Mystery boxes. Shipped direct to you.
         </p>
+
+        {/* Value Props */}
+        <div className="flex flex-wrap justify-center gap-6 mb-12 animate-fade-in animation-delay-500">
+          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+            <Shield className="w-4 h-4 text-primary" />
+            <span>Escrow Protected</span>
+          </div>
+          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+            <Package className="w-4 h-4 text-primary" />
+            <span>Manifested Inventory</span>
+          </div>
+          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+            <Zap className="w-4 h-4 text-primary" />
+            <span>Pay with Stars or TON</span>
+          </div>
+        </div>
 
         {/* Next Drop Countdown */}
         <div className="mb-12 animate-fade-in animation-delay-600">
           <div className="inline-block bg-card border border-primary/20 rounded-lg p-6 backdrop-blur-sm">
             <div className="flex items-center gap-2 mb-4 justify-center">
               <Clock className="w-5 h-5 text-primary" />
-              <span className="text-sm uppercase tracking-wider text-muted-foreground">Next Drop In</span>
+              <span className="text-sm uppercase tracking-wider text-muted-foreground">First Drop</span>
             </div>
-            <CountdownTimer targetDate={new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)} />
+            <CountdownTimer targetDate={new Date("2025-01-15T12:00:00")} />
           </div>
         </div>
 
         {/* CTAs */}
         <div className="flex flex-col sm:flex-row gap-4 justify-center items-center animate-fade-in animation-delay-800">
-          <a href="https://t.me/JucheGang" target="_blank" rel="noopener noreferrer">
+          <a href="https://t.me/OutlierClothiersBot" target="_blank" rel="noopener noreferrer">
             <Button size="lg" className="text-lg px-8 py-6 bg-primary hover:bg-primary/90 text-primary-foreground group">
               <Sparkles className="w-5 h-5 mr-2 group-hover:rotate-12 transition-transform" />
-              Join Waitlist
+              Join on Telegram
             </Button>
           </a>
           <Link href="/drops">
@@ -69,7 +84,7 @@ export function Hero() {
               variant="outline"
               className="text-lg px-8 py-6 border-primary/30 hover:border-primary hover:bg-primary/10 bg-transparent"
             >
-              View Collection
+              See How It Works
             </Button>
           </Link>
         </div>
@@ -77,16 +92,16 @@ export function Hero() {
         {/* Stats */}
         <div className="grid grid-cols-3 gap-8 max-w-2xl mx-auto mt-20 animate-fade-in animation-delay-1000">
           <div className="text-center">
-            <div className="text-3xl md:text-4xl font-bold text-primary mb-2">{"<100"}</div>
-            <div className="text-sm text-muted-foreground uppercase tracking-wider">Items Per Drop</div>
+            <div className="text-3xl md:text-4xl font-bold text-primary mb-2">80%</div>
+            <div className="text-sm text-muted-foreground uppercase tracking-wider">Off Retail</div>
           </div>
           <div className="text-center border-x border-border">
-            <div className="text-3xl md:text-4xl font-bold text-primary mb-2">2.8K+</div>
-            <div className="text-sm text-muted-foreground uppercase tracking-wider">Waitlist Members</div>
+            <div className="text-3xl md:text-4xl font-bold text-primary mb-2">$186K</div>
+            <div className="text-sm text-muted-foreground uppercase tracking-wider">First Drop Value</div>
           </div>
           <div className="text-center">
-            <div className="text-3xl md:text-4xl font-bold text-primary mb-2">{"<5min"}</div>
-            <div className="text-sm text-muted-foreground uppercase tracking-wider">Avg. Sellout Time</div>
+            <div className="text-3xl md:text-4xl font-bold text-primary mb-2">154K</div>
+            <div className="text-sm text-muted-foreground uppercase tracking-wider">Items Available</div>
           </div>
         </div>
       </div>

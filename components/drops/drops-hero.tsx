@@ -45,7 +45,7 @@ export function DropsHero() {
               Browse Active Drops
             </Button>
           </a>
-          <a href="https://t.me/JucheGang" target="_blank" rel="noopener noreferrer">
+          <a href="https://t.me/OutlierClothiersBot" target="_blank" rel="noopener noreferrer">
             <Button
               size="lg"
               variant="outline"
