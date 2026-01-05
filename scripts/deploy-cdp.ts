@@ -1,4 +1,4 @@
-import { CdpClient } from "@coinbase/cdp-sdk";
+import { CdpClient, type EvmServerAccount } from "@coinbase/cdp-sdk";
 import { createPublicClient, http, encodeDeployData, formatEther } from "viem";
 import { base } from "viem/chains";
 import * as fs from "fs";
@@ -18,18 +18,19 @@ async function main() {
 
   // Get or create account
   console.log("📍 Getting EVM account...");
-  let account;
+  let account: EvmServerAccount;
   try {
     // Try to get existing account by name
-    const accounts = await cdp.evm.listAccounts();
-    account = accounts.find((a: any) => a.name === "outlier-deployer");
-    if (!account) {
+    const list = await cdp.evm.listAccounts();
+    const existing = list.accounts.find((a) => a.name === "outlier-deployer");
+    if (existing) {
+      account = existing;
+      console.log("   Using existing account:", account.address);
+    } else {
       account = await cdp.evm.createAccount({ name: "outlier-deployer-2" });
       console.log("   Created new account:", account.address);
-    } else {
-      console.log("   Using existing account:", account.address);
     }
-  } catch (e) {
+  } catch {
     account = await cdp.evm.createAccount({ name: "outlier-deployer-3" });
     console.log("   Created account:", account.address);
   }

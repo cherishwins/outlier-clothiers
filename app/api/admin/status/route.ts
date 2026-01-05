@@ -19,6 +19,7 @@ export async function GET(request: NextRequest) {
       flashCargo: contracts.flashCargo || "not deployed",
       usdc: contracts.usdc,
       mainnetReady: isMainnetReady(),
+      deployed: false,
     },
     services: {
       database: await checkDatabase(),

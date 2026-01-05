@@ -29,3 +29,10 @@ next-env.d.ts
 # CDP API keys
 cdp_api_key*.json
 cdp_wallet_secret.txt
+# Sensitive files - NEVER commit
+*.csv
+*passwords*
+*Passwords*
+*.pem
+*.key
+cdp_*

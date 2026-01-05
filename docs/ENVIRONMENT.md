@@ -80,6 +80,29 @@ POSTHOG_API_KEY=
 NEXT_PUBLIC_POSTHOG_KEY=
 ```
 
+## AI - Vercel AI Gateway (Text/Reasoning/Vision)
+
+Used by the Outlier “Voice Concierge” (press-to-talk assistant).
+
+```bash
+# Create/manage keys in Vercel: https://vercel.com/~/
+AI_GATEWAY_API_KEY=
+
+# Optional overrides
+AI_GATEWAY_MODEL=xai/grok-4.1-fast-non-reasoning
+AI_GATEWAY_BASE_URL=https://ai-gateway.vercel.sh/v3/ai
+```
+
+### Optional: Voice transcription (for press-to-talk audio upload)
+
+If you want server-side transcription from recorded audio (works even without browser speech recognition),
+set **one** of:
+
+```bash
+GROQ_API_KEY=
+OPENAI_API_KEY=
+```
+
 ---
 
 ## Deployment Checklist

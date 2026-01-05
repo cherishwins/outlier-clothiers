@@ -11,9 +11,9 @@ import {
   FLASH_CARGO_ABI,
   ERC20_ABI,
   CONTRACTS,
+  getIsTestnet,
   formatUSDC,
   parseUSDC,
-  DropStatus,
 } from "@/lib/contracts"
 import {
   Package,
@@ -51,7 +51,7 @@ export function PaymentFlow({ dropId, boxType, quantity = 1 }: PaymentFlowProps)
   const [step, setStep] = useState<Step>("connect")
   const [error, setError] = useState<string | null>(null)
 
-  const isTestnet = true // Toggle for mainnet
+  const isTestnet = getIsTestnet()
   const contracts = isTestnet ? CONTRACTS.baseSepolia : CONTRACTS.base
 
   const basePrice = BOX_PRICES[boxType]

@@ -3,20 +3,21 @@ import { encodeDeployData, formatEther } from "viem";
 import * as fs from "fs";
 import * as path from "path";
 
-// Load CDP API key
-const CDP_API_KEY = JSON.parse(
-  fs.readFileSync(path.join(__dirname, "../cdp_api_key (1).json"), "utf-8")
-);
-
 // Base mainnet USDC
 const USDC_ADDRESS = "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913";
 
 async function deploy() {
   console.log("🚀 Initializing CDP Wallet on Base mainnet...\n");
 
+  const apiKeyId = process.env.CDP_API_KEY_ID;
+  const apiKeySecret = process.env.CDP_API_KEY_SECRET;
+  if (!apiKeyId || !apiKeySecret) {
+    throw new Error("Missing CDP_API_KEY_ID / CDP_API_KEY_SECRET in environment");
+  }
+
   const walletProvider = await CdpEvmWalletProvider.configureWithWallet({
-    apiKeyId: CDP_API_KEY.id,
-    apiKeySecret: CDP_API_KEY.privateKey,
+    apiKeyId,
+    apiKeySecret,
     networkId: "base",
   });
 

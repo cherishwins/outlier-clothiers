@@ -1,4 +1,5 @@
 import { type NextRequest, NextResponse } from "next/server"
+import { quoteDrop } from "@/lib/pricing"
 
 interface CoinbasePaymentRequest {
   productName: string
@@ -17,7 +18,6 @@ export async function POST(request: NextRequest) {
     const body: CoinbasePaymentRequest = await request.json()
     const {
       productName,
-      amount,
       dropId,
       quantity,
       boxType,
@@ -25,6 +25,17 @@ export async function POST(request: NextRequest) {
       customerEmail,
       shippingAddress,
     } = body
+
+    const resolvedDropId = dropId ?? 0
+    const resolvedQuantity = quantity ?? 1
+    const resolvedBoxType = boxType || "medium"
+
+    if (!Number.isFinite(resolvedDropId) || resolvedDropId <= 0) {
+      return NextResponse.json(
+        { success: false, error: "dropId is required" },
+        { status: 400 }
+      )
+    }
 
     const apiKey = process.env.COINBASE_COMMERCE_API_KEY
     if (!apiKey) {
@@ -35,7 +46,21 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    console.log("[Coinbase] Creating charge:", { productName, amount })
+    const isTestnet = process.env.NEXT_PUBLIC_TESTNET === "true"
+    const quote = await quoteDrop({
+      dropId: resolvedDropId,
+      quantity: resolvedQuantity,
+      isTestnet,
+    })
+    const amountUsd = quote.totalUsd.toFixed(2)
+
+    console.log("[Coinbase] Creating charge:", {
+      productName,
+      dropId: resolvedDropId,
+      quantity: resolvedQuantity,
+      amountUsd,
+      isTestnet,
+    })
 
     // Build redirect URLs
     const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "https://outlierclothiers.com"
@@ -55,18 +80,19 @@ export async function POST(request: NextRequest) {
         description: `OUTLIER CLOTHIERS - ${productName}`,
         pricing_type: "fixed_price",
         local_price: {
-          amount: amount.toString(),
+          amount: amountUsd,
           currency: "USD",
         },
         // Metadata passed to webhook
         metadata: {
-          drop_id: dropId?.toString() || "0",
-          quantity: quantity?.toString() || "1",
-          box_type: boxType || "medium",
+          drop_id: resolvedDropId.toString(),
+          quantity: resolvedQuantity.toString(),
+          box_type: resolvedBoxType,
           customer_wallet: customerWallet || "",
           customer_email: customerEmail || "",
           shipping_address: shippingAddress ? JSON.stringify(shippingAddress) : "",
           source: "outlier-clothiers",
+          expected_usdc: quote.totalUsdc.toString(),
         },
         redirect_url: redirectUrl,
         cancel_url: cancelUrl,

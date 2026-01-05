@@ -1,10 +1,11 @@
 import { type NextRequest, NextResponse } from "next/server"
+import { quoteDrop } from "@/lib/pricing"
 
 const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN
 
 interface TelegramPaymentRequest {
   productName: string
-  stars: number // Price in Telegram Stars
+  stars?: number // Price in Telegram Stars (ignored — computed server-side)
   ton?: number // Optional TON price
   // Order metadata
   dropId?: number
@@ -27,7 +28,6 @@ export async function POST(request: NextRequest) {
     const body: TelegramPaymentRequest = await request.json()
     const {
       productName,
-      stars,
       dropId,
       quantity = 1,
       boxType = "medium",
@@ -36,17 +36,35 @@ export async function POST(request: NextRequest) {
       shippingAddress,
     } = body
 
-    // Calculate total Stars
-    const totalStars = stars || BOX_PRICES_STARS[boxType] * quantity
+    const resolvedDropId = dropId ?? 0
+    const isTestnet = process.env.NEXT_PUBLIC_TESTNET === "true"
+
+    if (!Number.isFinite(resolvedDropId) || resolvedDropId <= 0) {
+      return NextResponse.json(
+        { success: false, error: "dropId is required" },
+        { status: 400 }
+      )
+    }
+
+    // Calculate total Stars from contract slot price (fallback to static mapping)
+    let totalStars: number
+    try {
+      const quote = await quoteDrop({ dropId: resolvedDropId, quantity, isTestnet })
+      totalStars = quote.totalStars
+    } catch (error) {
+      console.warn("[Telegram] Falling back to static Stars pricing:", error)
+      totalStars = BOX_PRICES_STARS[boxType] * quantity
+    }
 
     // Build invoice payload (will be passed back in webhook)
     const invoicePayload = JSON.stringify({
-      dropId: dropId || 0,
+      dropId: resolvedDropId,
       quantity,
       boxType,
       customerTelegramId,
       customerEmail,
       shippingAddress,
+      expectedStars: totalStars,
     })
 
     // If we have a Telegram user ID, create an invoice link

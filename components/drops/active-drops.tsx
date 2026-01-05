@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge"
 import { Progress } from "@/components/ui/progress"
 import { Package, Star, TrendingUp, Clock } from "lucide-react"
 import { PaymentModal } from "@/components/payment/payment-modal"
+import { toast } from "@/hooks/use-toast"
 
 const activeDrops = [
   {
@@ -59,7 +60,10 @@ export function ActiveDrops() {
 
   const handlePaymentSuccess = () => {
     setIsPaymentOpen(false)
-    alert(`Success! Your mystery box for ${selectedDrop?.name} is secured.`)
+    toast({
+      title: "Pre-order confirmed",
+      description: selectedDrop?.name ? `Your mystery box for ${selectedDrop.name} is secured.` : "Your mystery box is secured.",
+    })
   }
 
   return (
@@ -161,6 +165,9 @@ export function ActiveDrops() {
             name: selectedDrop.name,
             price: selectedDrop.boxPrice,
             tonPrice: selectedDrop.tonPrice,
+            dropId: selectedDrop.id,
+            quantity: 1,
+            boxType: "medium",
           }}
           onPaymentSuccess={handlePaymentSuccess}
         />

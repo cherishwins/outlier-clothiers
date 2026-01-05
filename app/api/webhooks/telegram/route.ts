@@ -1,5 +1,6 @@
 import { type NextRequest, NextResponse } from "next/server"
-import crypto from "crypto"
+import { DropStatus } from "@/lib/contracts"
+import { quoteDrop, readDropState, type DropQuote } from "@/lib/pricing"
 
 // Telegram Payment webhook handler
 // Handles pre_checkout_query and successful_payment events
@@ -49,10 +50,11 @@ interface TelegramUpdate {
 interface InvoicePayload {
   dropId: number
   quantity: number
-  customerTelegramId: number
+  customerTelegramId?: number
   customerEmail?: string
   shippingAddress?: object
   boxType: "small" | "medium" | "large"
+  expectedStars?: number
 }
 
 // Verify Telegram webhook signature
@@ -114,7 +116,11 @@ async function handlePreCheckoutQuery(query: TelegramUpdate["pre_checkout_query"
     const payload: InvoicePayload = JSON.parse(query.invoice_payload)
     
     // Validate the order (check if drop is still active, slots available, etc.)
-    const isValid = await validateOrder(payload)
+    const validation = await validateOrder(payload, {
+      totalAmount: query.total_amount,
+      currency: query.currency,
+      telegramUserId: query.from.id,
+    })
     
     // Answer the pre-checkout query
     const response = await fetch(
@@ -124,8 +130,8 @@ async function handlePreCheckoutQuery(query: TelegramUpdate["pre_checkout_query"
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           pre_checkout_query_id: query.id,
-          ok: isValid,
-          error_message: isValid ? undefined : "Order is no longer available",
+          ok: validation.ok,
+          error_message: validation.ok ? undefined : (validation.error || "Order is no longer available"),
         }),
       }
     )
@@ -167,12 +173,39 @@ async function handleSuccessfulPayment(message: NonNullable<TelegramUpdate["mess
   try {
     // Parse invoice payload
     const payload: InvoicePayload = JSON.parse(payment.invoice_payload)
+
+    const validation = await validateOrder(payload, {
+      totalAmount: payment.total_amount,
+      currency: payment.currency,
+      telegramUserId: message.from.id,
+    })
+
+    if (!validation.ok) {
+      console.error("[Telegram Webhook] Payment validation failed:", validation.error)
+
+      if (BOT_TOKEN) {
+        await fetch(
+          `https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`,
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              chat_id: message.chat.id,
+              text: "⚠️ Payment received but the order details didn't validate. Please contact support and include your payment receipt.",
+              parse_mode: "HTML",
+            }),
+          }
+        )
+      }
+
+      return NextResponse.json({ ok: true })
+    }
     
     // Import settlement service
     const { settleOrder } = await import("@/lib/settlement")
 
     // Convert Stars to USD (approximately 1 Star = $0.01)
-    const amountUSD = payment.total_amount / 100
+    const amountUSD = validation.quote ? validation.quote.totalUsd : payment.total_amount / 100
 
     // Settle the order
     const order = await settleOrder({
@@ -222,14 +255,76 @@ async function handleSuccessfulPayment(message: NonNullable<TelegramUpdate["mess
   return NextResponse.json({ ok: true })
 }
 
-async function validateOrder(payload: InvoicePayload): Promise<boolean> {
-  // TODO: Add actual validation logic
-  // 1. Check if drop exists and is still funding
-  // 2. Check if slots are available
-  // 3. Verify pricing matches
-  
-  // For now, always approve
-  return true
+async function validateOrder(
+  payload: InvoicePayload,
+  context: {
+    totalAmount: number
+    currency: string
+    telegramUserId: number
+  }
+): Promise<{ ok: boolean; error?: string; quote?: DropQuote }> {
+  if (!payload || typeof payload !== "object") {
+    return { ok: false, error: "Invalid payload" }
+  }
+
+  const isTestnet = process.env.NEXT_PUBLIC_TESTNET === "true"
+
+  if (!Number.isFinite(payload.dropId) || payload.dropId <= 0) {
+    return { ok: false, error: "Invalid drop" }
+  }
+
+  if (!Number.isFinite(payload.quantity) || payload.quantity <= 0) {
+    return { ok: false, error: "Invalid quantity" }
+  }
+
+  if (context.currency !== "XTR") {
+    return { ok: false, error: "Unsupported currency" }
+  }
+
+  if (payload.customerTelegramId && payload.customerTelegramId !== context.telegramUserId) {
+    return { ok: false, error: "User mismatch" }
+  }
+
+  // On-chain drop checks (funding status, deadline, availability)
+  try {
+    const drop = await readDropState({ dropId: payload.dropId, isTestnet })
+    const deadlineMs = Number(drop.deadline) * 1000
+    if (Number.isFinite(deadlineMs) && Date.now() > deadlineMs) {
+      return { ok: false, error: "Drop expired" }
+    }
+    if (drop.status !== DropStatus.FUNDING) {
+      return { ok: false, error: "Drop is not funding" }
+    }
+    const remaining = drop.totalSlots - drop.slotsSold
+    if (remaining < BigInt(payload.quantity)) {
+      return { ok: false, error: "Not enough slots remaining" }
+    }
+  } catch (error) {
+    console.error("[Telegram Webhook] Drop validation error:", error)
+    return { ok: false, error: "Drop validation failed" }
+  }
+
+  // Price validation (Stars)
+  try {
+    const quote = await quoteDrop({
+      dropId: payload.dropId,
+      quantity: payload.quantity,
+      isTestnet,
+    })
+
+    if (payload.expectedStars !== undefined && payload.expectedStars !== quote.totalStars) {
+      return { ok: false, error: "Pricing changed. Please refresh and try again.", quote }
+    }
+
+    if (context.totalAmount !== quote.totalStars) {
+      return { ok: false, error: "Payment amount mismatch", quote }
+    }
+
+    return { ok: true, quote }
+  } catch (error) {
+    console.error("[Telegram Webhook] Pricing validation error:", error)
+    return { ok: false, error: "Pricing validation failed" }
+  }
 }
 
 async function sendPaymentConfirmation(

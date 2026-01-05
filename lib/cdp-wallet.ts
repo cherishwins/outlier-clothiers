@@ -55,26 +55,28 @@ export async function getCdpAccount(): Promise<CdpAccount> {
 
   try {
     // Try to list existing accounts
-    const accounts = await cdp.evm.listAccounts()
-    const existing = accounts.find((a: { name: string }) => a.name === accountName)
+    const list = await cdp.evm.listAccounts()
+    const existing = list.accounts.find((a) => a.name === accountName)
 
     if (existing) {
-      cachedAccount = {
+      const account: CdpAccount = {
         address: existing.address as `0x${string}`,
-        name: existing.name,
+        name: existing.name ?? accountName,
       }
-      console.log("[CDP Wallet] Using existing account:", cachedAccount.address)
-      return cachedAccount
+      cachedAccount = account
+      console.log("[CDP Wallet] Using existing account:", account.address)
+      return account
     }
 
     // Create new account if not found
     const newAccount = await cdp.evm.createAccount({ name: accountName })
-    cachedAccount = {
+    const account: CdpAccount = {
       address: newAccount.address as `0x${string}`,
-      name: newAccount.name,
+      name: newAccount.name ?? accountName,
     }
-    console.log("[CDP Wallet] Created new account:", cachedAccount.address)
-    return cachedAccount
+    cachedAccount = account
+    console.log("[CDP Wallet] Created new account:", account.address)
+    return account
   } catch (error) {
     console.error("[CDP Wallet] Error getting account:", error)
     throw error

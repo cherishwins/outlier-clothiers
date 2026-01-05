@@ -1,4 +1,4 @@
-import { PrismaClient } from "@prisma/client"
+import { PrismaClient, type Prisma } from "@prisma/client"
 import { CONTRACTS, formatUSDC } from "./contracts"
 import { verifyPaymentOnChain, waitForTransaction } from "./payment-verification"
 
@@ -91,6 +91,19 @@ export async function settleOrder(request: SettlementRequest): Promise<OrderResu
   const contracts = isTestnet ? CONTRACTS.baseSepolia : CONTRACTS.base
 
   try {
+    const idempotencyKey = paymentTxHash || coinbaseChargeId || telegramPaymentId
+    const existingByPayment = idempotencyKey
+      ? await prisma.order.findFirst({
+          where: { payment_tx_hash: idempotencyKey },
+        })
+      : null
+
+    // If we've already processed this payment end-to-end, return the existing order
+    if (existingByPayment && existingByPayment.status !== "pending") {
+      console.log("[Settlement] Idempotent replay detected. Returning existing order:", existingByPayment.id)
+      return existingByPayment
+    }
+
     // 1. Verify on-chain payment if txHash provided
     if (paymentTxHash && paymentMethod === "x402") {
       const verification = await verifyPaymentOnChain({
@@ -136,21 +149,26 @@ export async function settleOrder(request: SettlementRequest): Promise<OrderResu
     const estimatedShippingCost = calculateShippingEstimate(shippingAddress)
 
     // 4. Create order in database
-    const order = await prisma.order.create({
-      data: {
-        drop_id: drop.id,
-        customer_wallet: customerWallet,
-        customer_email: customerEmail || null,
-        customer_name: extractCustomerName(shippingAddress),
-        shipping_address: shippingAddress as object,
-        shipping_cost: estimatedShippingCost,
-        payment_method: paymentMethod,
-        payment_amount: paymentAmount,
-        payment_currency: paymentMethod === "telegram" ? "STARS" : "USDC",
-        payment_tx_hash: paymentTxHash || coinbaseChargeId || telegramPaymentId || null,
-        status: "pending",
-      },
-    })
+    const orderData = {
+      drop_id: drop.id,
+      customer_wallet: customerWallet,
+      customer_email: customerEmail || null,
+      customer_name: extractCustomerName(shippingAddress),
+      shipping_address: shippingAddress as object,
+      shipping_cost: estimatedShippingCost,
+      payment_method: paymentMethod,
+      payment_amount: paymentAmount,
+      payment_currency: paymentMethod === "telegram" ? "STARS" : "USDC",
+      payment_tx_hash: idempotencyKey || null,
+      status: "pending",
+    }
+
+    const order = existingByPayment
+      ? await prisma.order.update({
+          where: { id: existingByPayment.id },
+          data: orderData,
+        })
+      : await prisma.order.create({ data: orderData })
 
     console.log("[Settlement] Order created:", order.id)
 
@@ -176,7 +194,7 @@ export async function settleOrder(request: SettlementRequest): Promise<OrderResu
         const buySlotResult = await executeBuySlot(dropId, quantity, customerWallet)
         
         if (buySlotResult.success) {
-          receiptNftTx = buySlotResult.txHash
+          receiptNftTx = buySlotResult.txHash ?? null
           // Wait for transaction and extract NFT ID
           if (buySlotResult.txHash) {
             const confirmed = await waitForTransaction(
@@ -424,7 +442,7 @@ export async function getCustomerOrders(customerWallet: string): Promise<OrderRe
 export async function updateOrderStatus(
   orderId: string,
   status: string,
-  additionalData?: Partial<OrderResult>
+  additionalData?: Prisma.OrderUpdateInput
 ): Promise<OrderResult> {
   return prisma.order.update({
     where: { id: orderId },

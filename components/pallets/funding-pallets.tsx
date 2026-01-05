@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge"
 import { Progress } from "@/components/ui/progress"
 import { ExternalLink, Star, Package, Clock } from "lucide-react"
 import { PaymentModal } from "@/components/payment/payment-modal"
+import { toast } from "@/hooks/use-toast"
 
 const fundingPallets = [
   {
@@ -48,7 +49,10 @@ export function FundingPallets() {
 
   const handlePaymentSuccess = () => {
     setIsPaymentOpen(false)
-    alert(`Success! You backed ${selectedPallet?.name}`)
+    toast({
+      title: "Backed",
+      description: selectedPallet?.name ? `You backed ${selectedPallet.name}.` : "Backing confirmed.",
+    })
   }
 
   return (
@@ -163,6 +167,9 @@ export function FundingPallets() {
             name: selectedPallet.name,
             price: selectedPallet.boxPrice,
             tonPrice: selectedPallet.boxPrice / 28, // rough conversion
+            dropId: selectedPallet.id,
+            quantity: 1,
+            boxType: "medium",
           }}
           onPaymentSuccess={handlePaymentSuccess}
         />

@@ -3,14 +3,17 @@ import { mainnet, base } from "viem/chains";
 import { privateKeyToAccount } from "viem/accounts";
 
 // Deployer wallet with ETH on Ethereum mainnet
-const PRIVATE_KEY = "0x66f8138861f13ea6de810493c004e71957b1d7442d3be5aaab197ae2b58854c6";
-const DEPLOYER_ADDRESS = "0xa58740136d8880d74cb5426B988d297273AC579e";
+const PRIVATE_KEY = process.env.BRIDGE_PRIVATE_KEY as `0x${string}` | undefined;
 
 // Base Bridge contract on Ethereum mainnet
 const BASE_BRIDGE = "0x49048044D57e1C92A77f79988d21Fa8fAF74E97e";
 
 async function main() {
   console.log("🔍 Checking Ethereum mainnet balance...\n");
+
+  if (!PRIVATE_KEY) {
+    throw new Error("Missing BRIDGE_PRIVATE_KEY (0x...) in environment");
+  }
 
   const account = privateKeyToAccount(PRIVATE_KEY);
   console.log("Wallet:", account.address);
@@ -26,7 +29,7 @@ async function main() {
 
   if (balance === 0n) {
     console.log("\n❌ No ETH found. Transaction might still be propagating.");
-    console.log("   Check: https://etherscan.io/address/" + DEPLOYER_ADDRESS);
+    console.log("   Check: https://etherscan.io/address/" + account.address);
     return;
   }
 

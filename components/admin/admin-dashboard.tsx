@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Package, Truck, DollarSign, Users, Download, ExternalLink } from "lucide-react"
+import { toast } from "@/hooks/use-toast"
 
 // Mock data - replace with real database queries
 const mockOrders = [
@@ -59,12 +60,12 @@ export function AdminDashboard() {
 
   const handlePrintLabel = async (orderId: string) => {
     // Call /api/shipping/create-label
-    alert(`Printing label for ${orderId}`)
+    toast({ title: "Label queued", description: `Printing label for ${orderId}` })
   }
 
   const handleBulkShip = async (dropId: string) => {
     // Call /api/admin/bulk-ship
-    alert(`Generating labels for all paid orders in ${dropId}`)
+    toast({ title: "Bulk ship queued", description: `Generating labels for all paid orders in ${dropId}` })
   }
 
   return (

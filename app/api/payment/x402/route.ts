@@ -1,5 +1,6 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { CONTRACTS, parseUSDC } from "@/lib/contracts"
+import { quoteDrop } from "@/lib/pricing"
 
 // x402 HTTP 402 Payment Required flow
 // Spec: https://github.com/coinbase/x402
@@ -7,7 +8,7 @@ import { CONTRACTS, parseUSDC } from "@/lib/contracts"
 interface PaymentRequestBody {
   // Product details
   productName: string
-  amount: number // In USD
+  amount: number // In USD (ignored — computed server-side from contract)
   
   // Order metadata
   dropId?: number
@@ -55,14 +56,29 @@ interface X402PaymentRequest {
 export async function POST(request: NextRequest) {
   try {
     const body: PaymentRequestBody = await request.json()
-    const { productName, amount, dropId, quantity, boxType, customerEmail, shippingAddress } = body
+    const { productName, dropId, quantity, boxType, customerEmail, shippingAddress } = body
 
     const isTestnet = process.env.NEXT_PUBLIC_TESTNET === "true"
     const contracts = isTestnet ? CONTRACTS.baseSepolia : CONTRACTS.base
     const network = isTestnet ? "base-sepolia" : "base"
 
-    // Calculate amount in USDC smallest unit (6 decimals)
-    const amountInSmallestUnit = parseUSDC(amount).toString()
+    const resolvedDropId = dropId ?? 0
+    const resolvedQuantity = quantity ?? 1
+
+    if (!Number.isFinite(resolvedDropId) || resolvedDropId <= 0) {
+      return NextResponse.json(
+        { success: false, error: "dropId is required" },
+        { status: 400 }
+      )
+    }
+
+    // Calculate amount in USDC smallest unit (6 decimals) from contract slot price
+    const quote = await quoteDrop({
+      dropId: resolvedDropId,
+      quantity: resolvedQuantity,
+      isTestnet,
+    })
+    const amountInSmallestUnit = quote.totalUsdc.toString()
 
     // Build callback URL
     const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "https://outlierclothiers.com"
@@ -81,8 +97,8 @@ export async function POST(request: NextRequest) {
       },
       callbackUrl,
       metadata: {
-        dropId: dropId || 0,
-        quantity: quantity || 1,
+        dropId: resolvedDropId,
+        quantity: resolvedQuantity,
         productName,
         boxType,
         customerEmail,

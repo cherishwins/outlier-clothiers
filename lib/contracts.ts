@@ -1,6 +1,5 @@
-import { createPublicClient, createWalletClient, http, parseAbi } from 'viem'
+import { createPublicClient, http, parseAbi } from 'viem'
 import { base, baseSepolia } from 'viem/chains'
-import { privateKeyToAccount } from 'viem/accounts'
 
 // Contract addresses (update after deployment)
 export const CONTRACTS = {
@@ -16,9 +15,20 @@ export const CONTRACTS = {
   },
 }
 
+export function getIsTestnet(): boolean {
+  const value = process.env.NEXT_PUBLIC_TESTNET
+  if (value === 'true') return true
+  if (value === 'false') return false
+
+  // Safe default:
+  // - dev: testnet
+  // - prod: mainnet
+  return process.env.NODE_ENV !== 'production'
+}
+
 // Check if mainnet contract is configured
 export function isMainnetReady(): boolean {
-  return CONTRACTS.base.flashCargo !== '' && CONTRACTS.base.flashCargo.length === 42
+  return /^0x[0-9a-fA-F]{40}$/.test(CONTRACTS.base.flashCargo)
 }
 
 // FlashCargo ABI (minimal for frontend)
@@ -66,14 +76,14 @@ export const DropStatus = {
 } as const
 
 // Helper to get chain config
-export function getChainConfig(isTestnet = true) {
+export function getChainConfig(isTestnet = getIsTestnet()) {
   const chain = isTestnet ? baseSepolia : base
   const contracts = isTestnet ? CONTRACTS.baseSepolia : CONTRACTS.base
   return { chain, contracts }
 }
 
 // Create public client for reading
-export function getPublicClient(isTestnet = true) {
+export function getPublicClient(isTestnet = getIsTestnet()) {
   const { chain } = getChainConfig(isTestnet)
   return createPublicClient({
     chain,
