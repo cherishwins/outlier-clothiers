@@ -52,14 +52,27 @@ npm run db:studio    # Open Prisma Studio
 ## Payment Integration Patterns
 
 ### x402 Protocol (HTTP 402)
-```typescript
-return NextResponse.json({
-  amount: 49.99,
-  currency: "USDC",
-  address: process.env.X402_PAYMENT_ADDRESS,
-  network: "base",
-}, { status: 402 })
+
+Spec-correct, via `x402-merchant` (from `cherishwins/x402-facilitator`,
+vendored as `vendor/x402-merchant-0.1.0.tgz` until it is on npm).
+
 ```
+GET  /api/payment/x402?dropId=1&quantity=2   402: slot price from the contract, v1 body + v2 PAYMENT-REQUIRED header
+POST /api/payment/x402?dropId=1&quantity=2   X-PAYMENT header: verified offline, nonce claimed (X402Payment.nonce UNIQUE),
+                                             collected by the CDP server wallet, then settleOrder() buys the escrow slot
+```
+
+- `lib/x402.ts` is the whole rail: quote, claim, settle. The modal's x402
+  branch uses `x402-merchant/client` with wagmi to sign; the buyer pays no
+  gas and sends no transaction.
+- `X402_PAYMENT_ADDRESS` is where the USDC lands. Set it to the CDP server
+  wallet's address so the same wallet that receives can fund `buySlot`.
+- Nothing the client says about money is trusted: amount from
+  `quoteDrop()` at the time of the call, recipient from env, and the
+  signature must match both. A slot price that moved between quote and
+  signature is a decline with the reason; the client re-quotes.
+- The old homemade 402 shape and the `/api/webhooks/x402` tx-hash callback
+  are gone. No x402 client ever spoke them.
 
 ### Smart Contract Escrow
 - Buyers pay → funds locked in contract

@@ -104,3 +104,27 @@ model User {
   
   @@index([referral_code])
 }
+
+// x402: one row per signed EIP-3009 authorization. The nonce is UNIQUE, so
+// claiming one is a single INSERT and a replay is a constraint violation.
+model X402Payment {
+  id             String    @id @default(cuid())
+  nonce          String    @unique
+  payer          String
+  pay_to         String
+  network        String
+  drop_id        Int
+  quantity       Int
+  amount_units   BigInt
+  authorization  Json
+  signature      String
+  status         String    @default("authorized") // authorized | broadcast | settled | failed
+  tx_hash        String?
+  order_id       String?
+  error          String?
+  created_at     DateTime  @default(now())
+  settled_at     DateTime?
+
+  @@index([status])
+  @@index([drop_id])
+}

@@ -177,8 +177,9 @@ export async function settleOrder(request: SettlementRequest): Promise<OrderResu
     let receiptNftTx: string | null = null
 
     if (paymentMethod === "x402" && paymentTxHash) {
-      // Direct on-chain payment - NFT already minted via buySlot()
-      // Try to extract token ID from transaction logs
+      // A buySlot() sent by the buyer mints the NFT in the payment tx. An
+      // x402 settlement does not: it only moves USDC to the shop's wallet,
+      // and the slot is bought for the buyer below, like the other rails.
       const nftDetails = await extractNftFromTransaction(
         paymentTxHash as `0x${string}`,
         isTestnet
@@ -187,8 +188,9 @@ export async function settleOrder(request: SettlementRequest): Promise<OrderResu
         receiptNftId = nftDetails.tokenId
         receiptNftTx = paymentTxHash
       }
-    } else if (paymentMethod === "coinbase" || paymentMethod === "telegram") {
-      // Off-chain payment - need to execute buySlot via CDP wallet
+    }
+    if (!receiptNftId) {
+      // Off-chain (or wallet-collected) payment - need to execute buySlot via CDP wallet
       try {
         const { executeBuySlot } = await import("./cdp-wallet")
         const buySlotResult = await executeBuySlot(dropId, quantity, customerWallet)
