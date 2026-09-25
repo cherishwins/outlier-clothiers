@@ -1,6 +1,8 @@
 "use client"
 
 import { useState } from "react"
+import { useAccount, useConnect, useSignTypedData, useSwitchChain } from "wagmi"
+import { buildTypedData, freshNonce, parseOffer, paymentHeader, typedDataForViem } from "x402-merchant/client"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog"
 import { Badge } from "@/components/ui/badge"
 import { CreditCard, Zap, Star } from "lucide-react"
@@ -26,6 +28,10 @@ type PaymentMethod = "coinbase" | "x402" | "telegram" | null
 
 export function PaymentModal({ isOpen, onClose, product, onPaymentSuccess }: PaymentModalProps) {
   const [isProcessing, setIsProcessing] = useState(false)
+  const { address, chainId } = useAccount()
+  const { connectAsync, connectors } = useConnect()
+  const { switchChainAsync } = useSwitchChain()
+  const { signTypedDataAsync } = useSignTypedData()
 
   const quantity = product.quantity ?? 1
   const boxType = product.boxType ?? "medium"
@@ -34,19 +40,6 @@ export function PaymentModal({ isOpen, onClose, product, onPaymentSuccess }: Pay
   // Calculate USD price (approximate: 1 Star ≈ $0.01 USD)
   const usdPriceNumber = typeof product.usdPrice === "number" ? product.usdPrice : product.price * 0.01
   const usdPriceDisplay = usdPriceNumber.toFixed(2)
-
-  interface X402PaymentRequest {
-    version: string
-    network: string
-    paymentRequirements: {
-      scheme: string
-      currency: string
-      amount: string
-      recipient: string
-      description?: string
-    }
-    callbackUrl: string
-  }
 
   const handlePayment = async (method: PaymentMethod) => {
     setIsProcessing(true)
@@ -69,37 +62,51 @@ export function PaymentModal({ isOpen, onClose, product, onPaymentSuccess }: Pay
         // Redirect to Coinbase hosted checkout
         window.location.href = data.hosted_url
       } else if (method === "x402") {
-        // x402 HTTP 402 flow
-        const response = await fetch("/api/payment/x402", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            productName: product.name,
-            amount: usdPriceNumber,
-            dropId,
-            quantity,
-            boxType,
-          }),
-        })
-
-        if (response.status === 402) {
-          const paymentRequest = (await response.json()) as X402PaymentRequest
-          const amount = paymentRequest.paymentRequirements?.amount
-          const recipient = paymentRequest.paymentRequirements?.recipient
-          const currency = paymentRequest.paymentRequirements?.currency || "USDC"
-          const network = paymentRequest.network || "base"
-
-          toast({
-            title: "Crypto payment required",
-            description:
-              amount && recipient
-                ? `Send ${formatUSDC(BigInt(amount))} ${currency} on ${network} to ${recipient}.`
-                : "Payment request created. Follow the wallet prompt to complete payment.",
-          })
-        } else if (!response.ok) {
-          const err = await response.text()
-          throw new Error(err || "x402 payment request failed")
+        // x402: one signature from the buyer's wallet, no gas, no transaction.
+        // The server quotes the slot price as a 402, the wallet signs an
+        // EIP-3009 authorization for exactly that amount to the shop's
+        // address, and the shop collects it and funds the escrow slot.
+        const endpoint = `/api/payment/x402?dropId=${dropId}&quantity=${quantity}`
+        const quoteRes = await fetch(endpoint, { cache: "no-store" })
+        const quoteBody = await quoteRes.json().catch(() => ({}))
+        if (quoteRes.status !== 402) {
+          throw new Error(quoteBody?.error || `Payment is unavailable (${quoteRes.status})`)
         }
+        const offer = parseOffer(quoteBody)
+
+        let from = address
+        if (!from) {
+          const injected = connectors.find((c) => c.id === "injected")
+          const hasInjected = typeof window !== "undefined" && Boolean((window as { ethereum?: unknown }).ethereum)
+          const connector = (hasInjected && injected) || connectors[connectors.length - 1]
+          const connected = await connectAsync({ connector })
+          from = connected.accounts[0]
+        }
+        if (!from) throw new Error("No wallet account was shared.")
+        if (offer.chainId !== 8453 && offer.chainId !== 84532) throw new Error("Unsupported network in the offer.")
+        if (chainId !== offer.chainId) await switchChainAsync({ chainId: offer.chainId })
+
+        const td = buildTypedData(offer, { from, nonce: freshNonce() })
+        const signature = await signTypedDataAsync(typedDataForViem(td))
+
+        const payRes = await fetch(endpoint, {
+          method: "POST",
+          headers: { "Content-Type": "application/json", ...paymentHeader(td, signature) },
+          body: JSON.stringify({}),
+        })
+        const paid = await payRes.json().catch(() => ({}))
+        if (payRes.status === 402) throw new Error(paid?.error || "The payment was declined.")
+        if (!payRes.ok) throw new Error(paid?.error || "The payment could not be completed.")
+
+        toast({
+          title: paid.status === "settled" ? "Paid" : "Payment authorized",
+          description:
+            paid.status === "settled"
+              ? `${formatUSDC(BigInt(offer.amount))} USDC received${paid.receiptNftId ? `, receipt #${paid.receiptNftId}` : ""}.`
+              : `${formatUSDC(BigInt(offer.amount))} USDC authorized. We collect it and reserve your slot.`,
+        })
+        onPaymentSuccess?.()
+        onClose()
       } else if (method === "telegram") {
         // Telegram Stars/TON payment via Telegram WebApp API
         const tg = (window as unknown as { Telegram?: { WebApp?: any } })?.Telegram?.WebApp
