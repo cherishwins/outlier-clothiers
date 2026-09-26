@@ -1,0 +1,78 @@
+# Outlier Clothiers in production, on one box. Postgres, migrations, the server.
+#
+#   cp .env.example .env            # fill in the real values (see keys below)
+#   docker compose -f docker-compose.prod.yml up -d --build
+#
+# Order on every deploy: db healthy -> migrate runs `prisma migrate deploy`
+# once and exits 0 -> web starts. A failed migration stops the deploy instead
+# of serving a store whose code expects tables that do not exist.
+#
+# NEXT_PUBLIC_* are build args (Next inlines them); changing the app URL or the
+# testnet flag is a rebuild. Everything else here is runtime env: secrets live
+# in .env on the host and never enter an image layer.
+services:
+  db:
+    # Pinned by digest, not the floating :16-alpine tag, so the data-tier image
+    # is reproducible across rebuilds. Bump deliberately (Renovate/Dependabot).
+    image: postgres:16-alpine@sha256:721873c34ceb9f8d8fc265984940dc982404c105f19ad51be9fdc5970a6080ea
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-outlier}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}
+      POSTGRES_DB: ${POSTGRES_DB:-outlier}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}']
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  migrate:
+    build: { context: ., target: migrate }
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-outlier}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB:-outlier}
+    depends_on:
+      db: { condition: service_healthy }
+    restart: 'no'
+
+  web:
+    build:
+      context: .
+      target: runner
+      args:
+        NEXT_PUBLIC_APP_URL: ${NEXT_PUBLIC_APP_URL:?set NEXT_PUBLIC_APP_URL in .env}
+        NEXT_PUBLIC_TESTNET: ${NEXT_PUBLIC_TESTNET:-false}
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-outlier}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB:-outlier}
+      # x402 USDC rail — the address buyers pay (public, printed in every 402).
+      X402_PAYMENT_ADDRESS: ${X402_PAYMENT_ADDRESS:-}
+      # CDP server wallet that receives and settles.
+      CDP_API_KEY_ID: ${CDP_API_KEY_ID:-}
+      CDP_API_KEY_SECRET: ${CDP_API_KEY_SECRET:-}
+      CDP_WALLET_SECRET: ${CDP_WALLET_SECRET:-}
+      CDP_ACCOUNT_NAME: ${CDP_ACCOUNT_NAME:-}
+      # Coinbase Commerce rail.
+      COINBASE_COMMERCE_API_KEY: ${COINBASE_COMMERCE_API_KEY:-}
+      COINBASE_WEBHOOK_SECRET: ${COINBASE_WEBHOOK_SECRET:-}
+      # Telegram Stars/TON rail.
+      TELEGRAM_BOT_TOKEN: ${TELEGRAM_BOT_TOKEN:-}
+      TELEGRAM_BOT_USERNAME: ${TELEGRAM_BOT_USERNAME:-}
+      TELEGRAM_PAYMENT_PROVIDER_TOKEN: ${TELEGRAM_PAYMENT_PROVIDER_TOKEN:-}
+      TELEGRAM_WEBHOOK_SECRET: ${TELEGRAM_WEBHOOK_SECRET:-}
+      # Shipping labels (optional).
+      EASYPOST_API_KEY: ${EASYPOST_API_KEY:-}
+      # AI concierge (optional).
+      AI_GATEWAY_API_KEY: ${AI_GATEWAY_API_KEY:-}
+      AI_GATEWAY_BASE_URL: ${AI_GATEWAY_BASE_URL:-}
+      AI_GATEWAY_MODEL: ${AI_GATEWAY_MODEL:-}
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      GROQ_API_KEY: ${GROQ_API_KEY:-}
+    ports:
+      - '${WEB_PORT:-3000}:3000'
+    depends_on:
+      migrate: { condition: service_completed_successfully }
+
+volumes:
+  pgdata:
