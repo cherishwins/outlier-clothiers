@@ -25,21 +25,45 @@
 # than pull the whole openssl package, lift just those two libraries from the
 # full Debian image (same bookworm, exact ABI match, ~5 MB) into the runtime
 # stages. Keeps the runner slim and needs no OS package network.
+#
+# Both digests are multi-arch indexes (linux/amd64 and linux/arm64), so the
+# same file builds on an x86 host and on an arm64 one (Oracle Ampere).
 FROM node:22-bookworm@sha256:363e1587494626837fa7f9a23bdb453d13b0ff3c67c705c2805cfc69c2d2fad7 AS libssl
-# (only used as a source of /usr/lib/x86_64-linux-gnu/libssl.so.3 + libcrypto.so.3)
+# The libraries live under the platform's multiarch dir (x86_64-linux-gnu,
+# aarch64-linux-gnu). Gather them into a fixed path so the COPYs below do not
+# name an architecture.
+RUN mkdir /ssl \
+ && cp /usr/lib/$(uname -m)-linux-gnu/libssl.so.3 /usr/lib/$(uname -m)-linux-gnu/libcrypto.so.3 /ssl/
 
 FROM node:22-bookworm-slim@sha256:43ac6c60b8f89723f746e8a92ce91abd5017e627ce1ddfe4238355d3a30b772c AS deps
 WORKDIR /app
 # libssl must be present BEFORE the install so Prisma's platform detection sees
 # OpenSSL 3.0 and resolves the "native" engine to debian-openssl-3.0.x. Without
 # it, a slim image misdetects as 1.1.x and generates an engine the runtime
-# cannot load. Copied here, it flows through to source, build and migrate.
-COPY --from=libssl /usr/lib/x86_64-linux-gnu/libssl.so.3 /usr/lib/x86_64-linux-gnu/libcrypto.so.3 /usr/lib/x86_64-linux-gnu/
+# cannot load. /usr/local/lib is on the loader path, and ldconfig puts the pair
+# in the cache, which is where Prisma looks (`ldconfig -p`) when the multiarch
+# dir has no libssl. Done here, it flows through to source, build and migrate.
+COPY --from=libssl /ssl/ /usr/local/lib/
+RUN ldconfig
 # The x402 rail is a vendored tarball referenced by package-lock.json, so it
 # must be present before the install resolves.
 COPY package.json package-lock.json ./
 COPY vendor/ vendor/
-RUN npm ci --no-audit --no-fund
+# bufferutil and utf-8-validate (optional speedups for ws, required by wagmi's
+# MetaMask SDK) ship prebuilt binaries for linux-x64 only. On any other
+# architecture their install script compiles them, and -slim has no compiler,
+# so there the toolchain is installed for the install and purged in the same
+# layer: it never reaches an image. On x86_64 nothing is installed.
+RUN set -eux; \
+    if [ "$(uname -m)" != x86_64 ]; then \
+      apt-get update; \
+      apt-get install -y --no-install-recommends python3 make g++; \
+    fi; \
+    npm ci --no-audit --no-fund; \
+    if [ "$(uname -m)" != x86_64 ]; then \
+      apt-get purge -y --auto-remove python3 make g++; \
+      rm -rf /var/lib/apt/lists/*; \
+    fi
 
 FROM deps AS source
 COPY . .
@@ -73,7 +97,8 @@ CMD ["npx", "prisma", "migrate", "deploy"]
 
 FROM node:22-bookworm-slim@sha256:43ac6c60b8f89723f746e8a92ce91abd5017e627ce1ddfe4238355d3a30b772c AS runner
 WORKDIR /app
-COPY --from=libssl /usr/lib/x86_64-linux-gnu/libssl.so.3 /usr/lib/x86_64-linux-gnu/libcrypto.so.3 /usr/lib/x86_64-linux-gnu/
+COPY --from=libssl /ssl/ /usr/local/lib/
+RUN ldconfig
 ENV NODE_ENV=production \
     NEXT_TELEMETRY_DISABLED=1 \
     HOSTNAME=0.0.0.0 \
