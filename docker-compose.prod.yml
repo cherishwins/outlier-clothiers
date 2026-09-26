@@ -61,6 +61,8 @@ services:
       TELEGRAM_BOT_USERNAME: ${TELEGRAM_BOT_USERNAME:-}
       TELEGRAM_PAYMENT_PROVIDER_TOKEN: ${TELEGRAM_PAYMENT_PROVIDER_TOKEN:-}
       TELEGRAM_WEBHOOK_SECRET: ${TELEGRAM_WEBHOOK_SECRET:-}
+      # Bearer token for the operator-only routes; empty switches them off.
+      ADMIN_TOKEN: ${ADMIN_TOKEN:-}
       # Shipping labels (optional).
       EASYPOST_API_KEY: ${EASYPOST_API_KEY:-}
       # AI concierge (optional).

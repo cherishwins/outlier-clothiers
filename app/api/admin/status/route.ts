@@ -1,10 +1,16 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { CONTRACTS, isMainnetReady, getPublicClient } from "@/lib/contracts"
+import { requireAdminToken } from "@/lib/auth"
 
-// Admin endpoint to check system status
-// Should be protected with authentication in production
+// Admin endpoint to check system status.
+// Operator-only: needs `Authorization: Bearer <ADMIN_TOKEN>`, and answers 503
+// while ADMIN_TOKEN is unset. Read-only: it never creates a CDP account, and it
+// reports each service as booleans. Failures are logged here, never echoed.
 
 export async function GET(request: NextRequest) {
+  const denied = requireAdminToken(request)
+  if (denied) return denied
+
   const isTestnet = process.env.NEXT_PUBLIC_TESTNET === "true"
   const contracts = isTestnet ? CONTRACTS.baseSepolia : CONTRACTS.base
   const client = getPublicClient(isTestnet)
@@ -47,66 +53,59 @@ export async function GET(request: NextRequest) {
   return NextResponse.json(status)
 }
 
-async function checkDatabase(): Promise<{ status: string; error?: string }> {
+async function checkDatabase(): Promise<{ connected: boolean }> {
   try {
     const { PrismaClient } = await import("@prisma/client")
     const prisma = new PrismaClient()
     await prisma.$connect()
     await prisma.$disconnect()
-    return { status: "connected" }
+    return { connected: true }
   } catch (error) {
-    return { 
-      status: "error", 
-      error: error instanceof Error ? error.message : "Unknown error" 
-    }
+    console.error("[Admin Status] Database check failed:", error)
+    return { connected: false }
   }
 }
 
-async function checkCdpWallet(): Promise<{ status: string; address?: string; error?: string }> {
+async function checkCdpWallet(): Promise<{
+  configured: boolean
+  reachable: boolean
+  accountFound: boolean
+  address?: string
+}> {
+  const configured = !!(
+    process.env.CDP_API_KEY_ID &&
+    process.env.CDP_API_KEY_SECRET
+  )
+
+  if (!configured) {
+    return { configured, reachable: false, accountFound: false }
+  }
+
   try {
-    const hasConfig = !!(
-      process.env.CDP_API_KEY_ID && 
-      process.env.CDP_API_KEY_SECRET
-    )
-    
-    if (!hasConfig) {
-      return { status: "not configured" }
-    }
-
-    const { getCdpAccount } = await import("@/lib/cdp-wallet")
-    const account = await getCdpAccount()
-    return { 
-      status: "connected", 
-      address: account.address 
-    }
+    // Look up only: getCdpAccount() would create the account if it is missing.
+    const { findCdpAccount } = await import("@/lib/cdp-wallet")
+    const account = await findCdpAccount()
+    return account
+      ? { configured, reachable: true, accountFound: true, address: account.address }
+      : { configured, reachable: true, accountFound: false }
   } catch (error) {
-    return { 
-      status: "error", 
-      error: error instanceof Error ? error.message : "Unknown error" 
-    }
+    console.error("[Admin Status] CDP wallet check failed:", error)
+    return { configured, reachable: false, accountFound: false }
   }
 }
 
-function checkCoinbaseConfig(): { status: string } {
-  const hasApiKey = !!process.env.COINBASE_COMMERCE_API_KEY
-  const hasWebhookSecret = !!process.env.COINBASE_WEBHOOK_SECRET
-  
-  if (hasApiKey && hasWebhookSecret) {
-    return { status: "configured" }
-  } else if (hasApiKey) {
-    return { status: "partial (missing webhook secret)" }
+function checkCoinbaseConfig(): { apiKey: boolean; webhookSecret: boolean } {
+  // Without the webhook secret, /api/webhooks/coinbase refuses every event.
+  return {
+    apiKey: !!process.env.COINBASE_COMMERCE_API_KEY,
+    webhookSecret: !!process.env.COINBASE_WEBHOOK_SECRET,
   }
-  return { status: "not configured" }
 }
 
-function checkTelegramConfig(): { status: string } {
-  const hasBotToken = !!process.env.TELEGRAM_BOT_TOKEN
-  const hasWebhookSecret = !!process.env.TELEGRAM_WEBHOOK_SECRET
-  
-  if (hasBotToken && hasWebhookSecret) {
-    return { status: "configured" }
-  } else if (hasBotToken) {
-    return { status: "partial (missing webhook secret)" }
+function checkTelegramConfig(): { botToken: boolean; webhookSecret: boolean } {
+  // Without the webhook secret, /api/webhooks/telegram refuses every update.
+  return {
+    botToken: !!process.env.TELEGRAM_BOT_TOKEN,
+    webhookSecret: !!process.env.TELEGRAM_WEBHOOK_SECRET,
   }
-  return { status: "not configured" }
 }

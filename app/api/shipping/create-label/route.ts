@@ -1,6 +1,11 @@
 import { type NextRequest, NextResponse } from "next/server"
+import { requireAdminToken } from "@/lib/auth"
 
+// Operator-only: needs `Authorization: Bearer <ADMIN_TOKEN>` (503 while unset).
 export async function POST(request: NextRequest) {
+  const denied = requireAdminToken(request)
+  if (denied) return denied
+
   try {
     const { order_id, to_address } = await request.json()
 

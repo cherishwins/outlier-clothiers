@@ -1,5 +1,6 @@
 import { type NextRequest, NextResponse } from "next/server"
 import crypto from "crypto"
+import { safeEqual } from "@/lib/auth"
 
 // Coinbase Commerce webhook handler
 // Docs: https://docs.cloud.coinbase.com/commerce/docs/webhooks
@@ -51,25 +52,31 @@ function verifyWebhookSignature(
   const hmac = crypto.createHmac("sha256", webhookSecret)
   hmac.update(payload)
   const expectedSignature = hmac.digest("hex")
-  return crypto.timingSafeEqual(
-    Buffer.from(signature),
-    Buffer.from(expectedSignature)
-  )
+  return safeEqual(signature, expectedSignature)
 }
 
 export async function POST(request: NextRequest) {
+  // Fail closed. A charge:confirmed settles an order with the shop's own USDC,
+  // so nothing reaches the parser unless Coinbase signed it: no secret means
+  // the webhook is off, and a missing or wrong signature is refused.
+  const webhookSecret = process.env.COINBASE_WEBHOOK_SECRET
+  if (!webhookSecret) {
+    console.error("[Coinbase Webhook] COINBASE_WEBHOOK_SECRET is not set; refusing events")
+    return NextResponse.json({ error: "Webhook not configured" }, { status: 503 })
+  }
+
+  const signature = request.headers.get("X-CC-Webhook-Signature")
+  if (!signature) {
+    console.error("[Coinbase Webhook] Missing signature")
+    return NextResponse.json({ error: "Missing signature" }, { status: 401 })
+  }
+
   try {
     const rawBody = await request.text()
-    const signature = request.headers.get("X-CC-Webhook-Signature")
-    const webhookSecret = process.env.COINBASE_WEBHOOK_SECRET
 
-    // Verify signature if secret is configured
-    if (webhookSecret && signature) {
-      const isValid = verifyWebhookSignature(rawBody, signature, webhookSecret)
-      if (!isValid) {
-        console.error("[Coinbase Webhook] Invalid signature")
-        return NextResponse.json({ error: "Invalid signature" }, { status: 401 })
-      }
+    if (!verifyWebhookSignature(rawBody, signature, webhookSecret)) {
+      console.error("[Coinbase Webhook] Invalid signature")
+      return NextResponse.json({ error: "Invalid signature" }, { status: 401 })
     }
 
     const event: CoinbaseWebhookEvent = JSON.parse(rawBody)
