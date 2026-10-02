@@ -35,7 +35,6 @@ export async function GET(request: NextRequest) {
     },
     webhooks: {
       coinbase: `${process.env.NEXT_PUBLIC_APP_URL}/api/webhooks/coinbase`,
-      x402: `${process.env.NEXT_PUBLIC_APP_URL}/api/webhooks/x402`,
       telegram: `${process.env.NEXT_PUBLIC_APP_URL}/api/webhooks/telegram`,
     },
   }
