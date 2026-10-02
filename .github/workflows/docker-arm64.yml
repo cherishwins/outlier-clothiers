@@ -1,0 +1,61 @@
+name: Docker image builds on arm64
+
+# The one-box deploy targets a free Oracle Ampere (arm64) VM as well as x86.
+# This image once could not build there while every x86 build stayed green: the
+# libssl lift named the x86_64 library path, and two native ws addons have no
+# linux-arm64 prebuild. So this builds both images for arm64 whenever what goes
+# into them changes. Emulated with QEMU, so it is slow; nothing is pushed and no
+# secret is used.
+
+on:
+  pull_request:
+    paths:
+      - Dockerfile
+      - package.json
+      - package-lock.json
+      - .github/workflows/docker-arm64.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-arm64:
+    runs-on: ubuntu-latest
+    timeout-minutes: 150
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+        with:
+          platforms: arm64
+
+      - name: Set up Buildx
+        uses: docker/setup-buildx-action@v3
+
+      # The runner target builds every stage it depends on: libssl, deps
+      # (npm ci), the Next.js build, and the slim runtime image.
+      - name: Build the runtime image for linux/arm64
+        run: |
+          docker buildx build \
+            --platform linux/arm64 \
+            --target runner \
+            --output type=cacheonly \
+            --progress plain \
+            .
+
+      # The one-shot migration image. Shares deps with the build above, so
+      # this reuses its cache.
+      - name: Build the migrate image for linux/arm64
+        run: |
+          docker buildx build \
+            --platform linux/arm64 \
+            --target migrate \
+            --output type=cacheonly \
+            --progress plain \
+            .

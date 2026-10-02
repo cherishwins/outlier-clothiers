@@ -45,6 +45,29 @@ export function initCdpClient(): CdpClient {
 }
 
 /**
+ * Look up the main CDP wallet account by name without creating it. Read-only
+ * callers (the admin status check) use this, so a GET never provisions a wallet.
+ */
+export async function findCdpAccount(): Promise<CdpAccount | null> {
+  if (cachedAccount) return cachedAccount
+
+  const cdp = initCdpClient()
+  const accountName = process.env.CDP_ACCOUNT_NAME || "outlier-server"
+
+  const list = await cdp.evm.listAccounts()
+  const existing = list.accounts.find((a) => a.name === accountName)
+  if (!existing) return null
+
+  const account: CdpAccount = {
+    address: existing.address as `0x${string}`,
+    name: existing.name ?? accountName,
+  }
+  cachedAccount = account
+  console.log("[CDP Wallet] Using existing account:", account.address)
+  return account
+}
+
+/**
  * Get or create the main CDP wallet account for server operations
  */
 export async function getCdpAccount(): Promise<CdpAccount> {
@@ -54,19 +77,8 @@ export async function getCdpAccount(): Promise<CdpAccount> {
   const accountName = process.env.CDP_ACCOUNT_NAME || "outlier-server"
 
   try {
-    // Try to list existing accounts
-    const list = await cdp.evm.listAccounts()
-    const existing = list.accounts.find((a) => a.name === accountName)
-
-    if (existing) {
-      const account: CdpAccount = {
-        address: existing.address as `0x${string}`,
-        name: existing.name ?? accountName,
-      }
-      cachedAccount = account
-      console.log("[CDP Wallet] Using existing account:", account.address)
-      return account
-    }
+    const existing = await findCdpAccount()
+    if (existing) return existing
 
     // Create new account if not found
     const newAccount = await cdp.evm.createAccount({ name: accountName })

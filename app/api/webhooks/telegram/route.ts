@@ -1,6 +1,7 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { DropStatus } from "@/lib/contracts"
 import { quoteDrop, readDropState, type DropQuote } from "@/lib/pricing"
+import { safeEqual } from "@/lib/auth"
 
 // Telegram Payment webhook handler
 // Handles pre_checkout_query and successful_payment events
@@ -57,28 +58,33 @@ interface InvoicePayload {
   expectedStars?: number
 }
 
-// Verify Telegram webhook signature
+// Verify Telegram webhook authenticity: Telegram echoes the secret_token given
+// to setWebhook in this header.
 function verifyTelegramWebhook(
   request: NextRequest,
-  rawBody: string
+  secretToken: string
 ): boolean {
-  const secretToken = process.env.TELEGRAM_WEBHOOK_SECRET
-  if (!secretToken) return true // Skip verification if not configured
-  
-  const telegramSignature = request.headers.get("X-Telegram-Bot-Api-Secret-Token")
-  return telegramSignature === secretToken
+  const telegramSignature = request.headers.get("X-Telegram-Bot-Api-Secret-Token") ?? ""
+  return safeEqual(telegramSignature, secretToken)
 }
 
 export async function POST(request: NextRequest) {
+  // Fail closed. The secret is the only thing that tells Telegram apart from
+  // anyone else, and a successful_payment update settles an order through the
+  // CDP wallet whether or not the bot token is set. No secret, no webhook.
+  const secretToken = process.env.TELEGRAM_WEBHOOK_SECRET
+  if (!secretToken) {
+    console.error("[Telegram Webhook] TELEGRAM_WEBHOOK_SECRET is not set; refusing updates")
+    return NextResponse.json({ error: "Webhook not configured" }, { status: 503 })
+  }
+
+  if (!verifyTelegramWebhook(request, secretToken)) {
+    console.error("[Telegram Webhook] Invalid signature")
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+  }
+
   try {
     const rawBody = await request.text()
-    
-    // Verify webhook authenticity
-    if (!verifyTelegramWebhook(request, rawBody)) {
-      console.error("[Telegram Webhook] Invalid signature")
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-    }
-
     const update: TelegramUpdate = JSON.parse(rawBody)
     console.log("[Telegram Webhook] Received update:", update.update_id)
 
