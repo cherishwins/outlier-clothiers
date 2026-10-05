@@ -80,7 +80,9 @@ help - Get support
 Create these in your Next.js app:
 
 ```typescript
-// app/api/telegram/webhook/route.ts
+// app/api/webhooks/telegram/route.ts
+// The real handler refuses any update without the X-Telegram-Bot-Api-Secret-Token
+// header that Telegram echoes from setWebhook's secret_token. Keep that check.
 import { NextRequest, NextResponse } from 'next/server'
 
 export async function POST(req: NextRequest) {
@@ -135,7 +137,8 @@ async function sendWelcomeMessage(chatId: number) {
 ### Set Webhook
 ```bash
 curl -X POST https://api.telegram.org/bot<YOUR_BOT_TOKEN>/setWebhook \
-  -d "url=https://outlierclothiers.com/api/telegram/webhook"
+  -d "url=https://outlierclothiers.com/api/webhooks/telegram" \
+  -d "secret_token=<TELEGRAM_WEBHOOK_SECRET>"
 ```
 
 ## Telegram Stars Payment Flow
@@ -155,7 +158,7 @@ Use **ngrok** to expose localhost for webhook testing:
 ```bash
 ngrok http 3000
 # Copy the HTTPS URL
-# Set as webhook: https://api.telegram.org/bot<TOKEN>/setWebhook?url=https://xxx.ngrok.io/api/telegram/webhook
+# Set as webhook: https://api.telegram.org/bot<TOKEN>/setWebhook?url=https://xxx.ngrok.io/api/webhooks/telegram&secret_token=<TELEGRAM_WEBHOOK_SECRET>
 ```
 
 ### Test Payment Flow
