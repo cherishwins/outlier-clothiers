@@ -36,3 +36,6 @@ cdp_wallet_secret.txt
 *.pem
 *.key
 cdp_*
+
+# Windows download metadata from zip extraction
+*:Zone.Identifier
