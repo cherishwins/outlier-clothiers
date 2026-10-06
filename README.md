@@ -2,7 +2,7 @@
 
 > **Crypto-Native Flash DAO for Luxury Liquidation**
 >
-> Pre-fund pallets. Get 80% off retail. Zero inventory risk.
+> Pre-fund pallets through on-chain escrow. Mystery boxes from manifested liquidation loads.
 
 [![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https://github.com/cherishwins/outlier-clothiers)
 [![License: MIT](https://img.shields.io/badge/License-MIT-gold.svg)](https://opensource.org/licenses/MIT)
@@ -13,7 +13,7 @@
 
 ## The Model
 
-We're flipping the liquidation game with trustless crowdfunding. Factories overproduce. Orders get canceled. We buy the surplus via manifested truckloads—you get designer goods at wholesale prices through a Flash DAO model.
+Crowdfunded liquidation. Factories overproduce and retailers clear returns by the pallet. We pre-sell mystery boxes from one manifested load, buy it only once its drop is funded, and pack boxes at random from it. Box contents, and their value, vary.
 
 ```
 ┌─────────────────────────────────────────────────────────────────────┐
@@ -27,12 +27,12 @@ We're flipping the liquidation game with trustless crowdfunding. Factories overp
 │  └──────┘        │Contract│       └──────┘        └──────┘         │
 │                  └──────┘                                           │
 │      ↓               ↓                ↓               ↓             │
-│  Manifest       Tiered           Auto-release    NFT Receipt        │
-│  Visible        Pricing          Funds           + Tracking         │
-│                 (70%→130%)       @ Threshold                        │
+│  Manifest       Tiered           Owner releases  NFT Receipt        │
+│  Visible        Pricing          before the      + Tracking         │
+│                 (100/130/160%)   deadline                           │
 │                                                                     │
 │  ═══════════════════════════════════════════════════════════════   │
-│  MISS TARGET? → Auto-refund all buyers. Zero custody risk.         │
+│  NOT RELEASED BY THE DEADLINE, OR CANCELLED? → Receipts can refund. │
 └─────────────────────────────────────────────────────────────────────┘
 ```
 
@@ -41,7 +41,7 @@ We're flipping the liquidation game with trustless crowdfunding. Factories overp
 | Traditional Model | Our Flash DAO |
 |-------------------|---------------|
 | Buy inventory first | Crowdfund first |
-| Hold unsold stock | Zero inventory risk |
+| Hold unsold stock | Buy only funded loads |
 | 3-5% payment fees | Near-zero crypto fees |
 | Chargebacks | Irreversible on-chain |
 | Trust the seller | Trust the contract |
@@ -55,8 +55,8 @@ Frontend          Backend           Payments           Blockchain
 ─────────         ───────           ────────           ──────────
 Next.js 16        API Routes        x402 Protocol      Base L2
 React 19          Prisma ORM        Telegram Stars     Smart Contracts
-TailwindCSS v4    PostgreSQL        TON                Viem + Wagmi
-Radix UI          EasyPost API      Coinbase Commerce  NFT Receipts
+TailwindCSS v4    PostgreSQL        Coinbase Commerce  Viem + Wagmi
+Radix UI          EasyPost API                         NFT Receipts
 ```
 
 ### Key Dependencies
@@ -93,7 +93,7 @@ export async function POST(request: NextRequest) {
 
 **Supported Wallets:** Coinbase Wallet, Rainbow, MetaMask (with x402 Snap), Phantom
 
-### 2. Telegram Stars/TON (Native)
+### 2. Telegram Stars (Native)
 
 Pay directly in Telegram. Integrated with Telegram WebApp API.
 
@@ -101,7 +101,7 @@ Pay directly in Telegram. Integrated with Telegram WebApp API.
 // Telegram Stars integration
 const invoice = await bot.createInvoice({
   title: "Mystery Box",
-  description: "80% off retail luxury goods",
+  description: "Liquidation mystery box",
   currency: "XTR", // Telegram Stars
   prices: [{ amount: 1200, label: "Mystery Box" }]
 })
@@ -121,7 +121,7 @@ outlier-clothiers/
 │   ├── api/
 │   │   ├── payment/
 │   │   │   ├── coinbase/route.ts    # Coinbase Commerce
-│   │   │   ├── telegram/route.ts    # Stars/TON
+│   │   │   ├── telegram/route.ts    # Telegram Stars
 │   │   │   └── x402/route.ts        # x402 Protocol
 │   │   └── shipping/
 │   │       ├── calculate/route.ts   # EasyPost rates
@@ -129,19 +129,15 @@ outlier-clothiers/
 │   ├── admin/page.tsx               # Order management
 │   ├── drops/page.tsx               # Mystery box drops
 │   ├── juche/page.tsx               # VIP network (Juche Gang)
-│   ├── memeseal/page.tsx            # TON notary service
 │   ├── pallets/page.tsx             # Active pallet funding
-│   ├── tactical/page.tsx            # Tactical gear section
 │   ├── layout.tsx
 │   └── page.tsx                     # Landing page
 ├── components/
 │   ├── admin/                       # Dashboard components
 │   ├── drops/                       # Drop-specific UI
 │   ├── juche/                       # VIP membership UI
-│   ├── memeseal/                    # TON notary UI
 │   ├── pallets/                     # Pallet funding UI
 │   ├── payment/                     # Payment modal
-│   ├── tactical/                    # Tactical gear UI
 │   └── ui/                          # Shadcn/Radix primitives
 ├── lib/
 │   └── utils.ts                     # Utility functions
@@ -245,7 +241,9 @@ model Order {
 
 ## Smart Contract (Escrow)
 
-The Flash DAO uses an on-chain escrow contract on Base L2:
+The Flash DAO uses an on-chain escrow contract on Base L2. The sketch below
+is simplified; the real contract, its rules and its known fixes are in
+[`contracts/`](contracts/README.md).
 
 ```solidity
 // contracts/FlashCargo.sol
@@ -292,10 +290,10 @@ contract FlashCargo is ERC721, ReentrancyGuard {
 ```
 Subject: Partnership – sell your truckloads 10× faster with on-chain flash sales
 
-We take your manifest CSV → auto-list every UPC as a tiered slot
-Buyers pay USDC to escrow contract (no custody risk)
-Hit target → funds auto-release to you, we ship
-Miss target → 100% auto-refunds, zero work for you
+We take your manifest CSV → list the load as a drop with tiered slots
+Buyers pay USDC into an escrow contract
+Target hit before the deadline → we release the funds and buy your load
+Target missed → buyers claim refunds from the contract; you are not involved
 
 Live demo: [your-demo-url]
 ```
@@ -359,10 +357,10 @@ npm run db:studio    # Open Prisma Studio
 
 ## Legal & Compliance
 
-- **Canada:** Crypto payments treated as barter income. Track fair market value.
-- **No MSB license required** for crypto-only operations (no fiat ramps)
-- Auto-refunds via smart contract = no custody risk
-- Consult tax professional for CARF reporting (2026+)
+- Not legal advice, and none of this has been reviewed by a lawyer. Get a written Canadian legal opinion before taking real money.
+- Do not assume no MSB registration is needed: FINTRAC's virtual-currency tests do not turn on custody, and card, Stars and x402 payments land in the shop's CDP wallet before it buys the escrow slot (see ARCHITECTURE.md, "Who holds the money, and when").
+- Mystery boxes sold for a price, with contents of varying value chosen at random, should be part of that legal review.
+- **Canada tax:** Crypto payments treated as barter income. Track fair market value. Consult a tax professional for CARF reporting (2026+).
 
 ---
 

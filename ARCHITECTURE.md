@@ -23,54 +23,64 @@ Payment Modal opens with 3 options:
     → Customer pays with credit card
     → Coinbase converts to crypto
     → Webhook fires to /api/webhooks/coinbase
-    → Funds deposited to smart contract
+    → Shop's CDP wallet calls buySlot() for the buyer (lib/settlement.ts)
     → Order record created in database
-    → Customer gets NFT receipt token
-    
-[Option 2: x402 Protocol]
-    → Customer's wallet prompted to pay USDC
-    → x402 middleware detects payment on-chain
-    → Webhook fires to /api/webhooks/x402
-    → Funds deposited to smart contract
+
+[Option 2: x402 Protocol]  (lib/x402.ts, app/api/payment/x402)
+    → Buyer's wallet signs one EIP-3009 authorization for the slot price
+    → Shop's CDP wallet collects it (USDC lands in the shop's wallet)
+    → Shop's CDP wallet calls buySlot() for the buyer
     → Order record created in database
-    → Customer gets NFT receipt token
-    
+
 [Option 3: Telegram Stars/TON]
     → Customer pays in Telegram app
     → Telegram webhook fires to /api/webhooks/telegram
-    → Funds converted and deposited to contract
+    → Shop's CDP wallet calls buySlot() for the buyer
     → Order record created in database
-    → Customer gets NFT receipt token
+
+buySlot() mints the NFT receipt to msg.sender, which on these three rails is
+the shop's CDP wallet, not the buyer: the shop holds the receipt, and a
+claimRefund() on it pays the shop's wallet, which must pass it on. If
+buySlot() fails after the money arrived, the order is stored as
+`paid_unescrowed`: the money is in the shop's wallet, not in escrow, and the
+admin dashboard lists it for reconciliation.
 ```
 
-### Smart Contract Escrow Flow
+### Smart Contract Escrow Flow (contracts/src/FlashCargo.sol)
 
 ```
-Funds arrive in DropEscrow contract
+buySlot() deposits USDC into the FlashCargo contract and mints an NFT receipt
     ↓
-Contract checks: Is drop fully funded?
+Before the deadline, target reached?
     ↓
-YES → Release 90% to facilitator wallet for pallet purchase
-    → Hold 10% in escrow until delivery
+YES → Owner calls releaseFunds(): 100% of that drop's deposits go to the
+      contract owner in one transfer. There is no partial release, no
+      holdback until delivery, and no confirmDelivery() function.
     ↓
-Facilitator buys pallet from ViaTrading/B-Stock
+Owner buys pallet, ships orders, calls markFulfilled()
     ↓
-Facilitator ships orders (tracking uploaded to database)
-    ↓
-Customer confirms delivery in app
-    ↓
-Smart contract releases final 10% + burns NFT receipt
-    ↓
-NO → Funds held in escrow until deadline
-    → If deadline passes without funding → Auto-refund all customers
+Buyer may call claimOrder() to burn their receipt (bookkeeping only; no funds move)
+
+NO (deadline passed without a release, or owner called cancelDrop())
+    → Each buyer calls claimRefund(tokenId) to get their deposit back.
+      Refunds are claimed per receipt; nothing is refunded automatically.
 ```
 
-### Key Point: YOU NEVER HOLD MONEY
+Release and refund are mutually exclusive: release is only possible before
+the deadline, refunds only after it or after a cancel. See
+`contracts/README.md` for the fix that made this true and the redeploy it
+requires.
 
-- Customer funds go DIRECTLY to smart contract
-- Smart contract releases funds based on milestones
-- You're a facilitator, not a custodian
-- Zero custody risk
+### Who holds the money, and when
+
+- In escrow: deposits made through buySlot(), until release or refund.
+- In the shop's CDP wallet: Coinbase, Telegram and x402 payments, between
+  arriving and the wallet's buySlot() call — and indefinitely for any order
+  marked `paid_unescrowed`. Refunds of slots the CDP wallet bought also land
+  here, because it owns those receipts.
+- With the owner: everything released by releaseFunds().
+
+None of this has been reviewed by a lawyer.
 
 ---
 
@@ -176,15 +186,15 @@ export async function POST(request) {
       data: { status: "delivered", delivered_at: new Date() }
     })
     
-    // Trigger smart contract to release final 10%
-    await releaseEscrowFunds(order.receipt_nft_id)
+    // Delivery is off-chain bookkeeping only: FlashCargo has no
+    // per-order release. Funds were released (all at once) before purchase.
   }
 }
 ```
 
 **Option 2: Manual Confirmation**
 ```typescript
-// Customer clicks "Confirm Delivery" in app
+// Customer clicks "Confirm Delivery" in app (database only; nothing on chain)
 await db.order.update({
   where: { id: order_id },
   data: { 
@@ -193,9 +203,6 @@ await db.order.update({
     delivered_at: new Date() 
   }
 })
-
-// Smart contract releases final payment
-await contract.confirmDelivery(receipt_nft_id)
 ```
 
 ---
@@ -333,8 +340,8 @@ model User {
 2. Facilitator sees order in dashboard
    → GET /api/admin/orders?drop_id={id}&status=paid
 
-3. Drop reaches funding goal
-   → Smart contract releases 90% to facilitator
+3. Drop reaches funding goal before its deadline
+   → Owner calls releaseFunds(): 100% of the drop's deposits to the owner
    → Facilitator goes to ViaTrading and buys pallet
 
 4. Pallet arrives at warehouse
@@ -349,11 +356,10 @@ model User {
 
 6. Customer receives box
    → Tracking shows "delivered"
-   → Customer confirms in app
-   → Smart contract releases final 10%
+   → Owner calls markFulfilled() once the drop has shipped
 
 7. Order complete
-   → NFT receipt burned
+   → Buyer may burn their receipt with claimOrder()
    → Customer can leave review
 ```
 
@@ -380,6 +386,10 @@ POST /api/admin/bulk-ship
 ## Smart Contract Integration
 
 ### Payment → Contract Flow
+
+> Outdated sketch: there is no DropEscrow contract or fundDrop() function.
+> The real code is `lib/settlement.ts` (settleOrder) and `lib/cdp-wallet.ts`
+> (executeBuySlot, releaseFunds) against FlashCargo.
 
 ```typescript
 // lib/smart-contract.ts
@@ -476,16 +486,16 @@ export async function POST(request: Request) {
 ### Payment Security
 - ✅ All payments processed via regulated providers (Coinbase, Telegram)
 - ✅ No customer payment info stored (handled by providers)
-- ✅ Smart contract audited before mainnet
-- ✅ Multi-sig wallet for contract admin functions
+- [ ] Smart contract audit (not done; see contracts/README.md for known fixes)
+- [ ] Multi-sig wallet for contract admin functions (not done: owner is a single CDP wallet)
 
 ### Shipping & Privacy
-- ✅ Addresses encrypted at rest (use `@prisma/client` field-level encryption)
-- ✅ Shipping labels printed on-demand (not stored long-term)
-- ✅ Customer data deleted 90 days post-delivery (GDPR compliant)
+- [ ] Addresses encrypted at rest (not implemented)
+- [ ] Shipping labels printed on-demand (not stored long-term)
+- [ ] Customer data deleted 90 days post-delivery (not implemented)
 
 ### Refund Policy
-- ✅ Automatic refunds if drop doesn't reach funding goal
+- ✅ Refunds if a drop is cancelled or not released by its deadline (each buyer claims theirs)
 - ✅ Refunds processed via smart contract (no manual intervention)
 - ✅ 7-day dispute window for damaged items
 
@@ -524,7 +534,7 @@ export async function POST(request: Request) {
 ### Blockchain
 - Base L2 (low fees)
 - Viem + Wagmi
-- Smart Contract: DropEscrow.sol
+- Smart Contract: contracts/src/FlashCargo.sol
 
 ### Monitoring
 - Sentry (error tracking)
@@ -533,4 +543,4 @@ export async function POST(request: Request) {
 
 ---
 
-**This architecture ensures you're a trustless facilitator with zero custody risk, automated fulfillment, and transparent operations.**
+**Not legal advice. Funds do pass through the shop's wallet (see "Who holds the money, and when"); get a written Canadian legal opinion before taking real money.**

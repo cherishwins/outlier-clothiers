@@ -24,25 +24,27 @@ export function PalletsHero() {
 
         <Badge className="mb-6 bg-green-500/10 text-green-400 border-green-500/30">
           <Boxes className="w-4 h-4 mr-2" />
-          LIVE PALLET FUNDING
+          PALLET FUNDING
         </Badge>
 
         <h1 className="font-serif text-5xl md:text-7xl font-bold mb-6 text-balance">
           <span className="text-primary">ACTIVE PALLETS</span>
           <br />
-          <span className="text-foreground">FUND & PROFIT</span>
+          <span className="text-foreground">FUNDING PROGRESS</span>
         </h1>
 
         <p className="text-xl md:text-2xl text-muted-foreground mb-8 max-w-3xl mx-auto text-pretty leading-relaxed">
-          See which liquidation pallets are funding right now. Back the ones you believe in. Once funded, we buy and
-          fulfill. Transparent. Community-driven. No BS.
+          See which liquidation loads are funding right now, read from the escrow contract. Pre-order a box from the
+          ones you want. Once a drop is funded, we buy the load and fulfill.
         </p>
 
         <div className="flex flex-col sm:flex-row gap-4 justify-center">
-          <Button size="lg" className="text-lg px-8 py-6 bg-green-500 hover:bg-green-600 text-black">
-            <TrendingUp className="w-5 h-5 mr-2" />
-            View Funding Pallets
-          </Button>
+          <a href="#funding">
+            <Button size="lg" className="text-lg px-8 py-6 bg-green-500 hover:bg-green-600 text-black">
+              <TrendingUp className="w-5 h-5 mr-2" />
+              View Funding Pallets
+            </Button>
+          </a>
         </div>
       </div>
     </section>

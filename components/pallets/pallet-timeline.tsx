@@ -5,33 +5,33 @@ import { Search, DollarSign, ShoppingCart, Package, Truck, Star } from "lucide-r
 const timeline = [
   {
     icon: Search,
-    title: "Day 1: We Find the Pallet",
+    title: "We Find the Pallet",
     description: "Browse ViaTrading, B-Stock, Liquidation.com for manifested luxury overstock",
   },
   {
     icon: DollarSign,
-    title: "Day 1-7: Funding Period",
-    description: "List it as a drop. You pre-order mystery boxes. We track funding progress live.",
+    title: "Funding Period",
+    description: "List it as a drop with a target and a deadline. You pre-order mystery boxes. Progress is on-chain.",
   },
   {
     icon: ShoppingCart,
-    title: "Day 7: Funding Goal Hit",
-    description: "Once we hit 100% funding, we immediately purchase the pallet from source.",
+    title: "Funding Goal Hit",
+    description: "If the drop reaches its target before the deadline, we purchase the pallet from the source. If not, deposits are refundable.",
   },
   {
     icon: Package,
-    title: "Day 8-10: Import & Pack",
+    title: "Import & Pack",
     description: "Pallet arrives at our warehouse. We randomly pack mystery boxes from manifest items.",
   },
   {
     icon: Truck,
-    title: "Day 11-14: Ship & Deliver",
-    description: "All boxes ship out. You receive tracking. 7-10 days total turnaround.",
+    title: "Ship & Deliver",
+    description: "All boxes ship out. You receive tracking.",
   },
   {
     icon: Star,
-    title: "Day 15+: Unbox & Review",
-    description: "Film your unboxing. Tag us. Share the value you got. Repeat customers get perks.",
+    title: "Unbox & Review",
+    description: "Film your unboxing. Tag us. Tell us what you got.",
   },
 ]
 
@@ -44,7 +44,7 @@ export function PalletTimeline() {
             Pallet <span className="text-primary">Timeline</span>
           </h2>
           <p className="text-lg text-muted-foreground max-w-2xl mx-auto text-pretty">
-            From discovery to delivery: the full 14-day journey of a liquidation pallet drop.
+            From discovery to delivery: how a liquidation pallet drop runs.
           </p>
         </div>
 
@@ -76,10 +76,11 @@ export function PalletTimeline() {
               Questions? <span className="text-primary">We're Transparent</span>
             </h3>
             <p className="text-muted-foreground mb-6">
-              Join our Telegram community to see past unboxings, ask questions, and see exactly how we operate. No
-              secrets. No BS.
+              Join our Telegram community to ask questions and see exactly how we operate.
             </p>
-            <Button className="bg-primary hover:bg-primary/90">Join Telegram Community</Button>
+            <a href="https://t.me/OutlierClothiersBot" target="_blank" rel="noopener noreferrer">
+              <Button className="bg-primary hover:bg-primary/90">Join Telegram Community</Button>
+            </a>
           </Card>
         </div>
       </div>

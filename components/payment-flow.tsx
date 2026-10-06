@@ -11,9 +11,9 @@ import {
   FLASH_CARGO_ABI,
   ERC20_ABI,
   CONTRACTS,
+  DropStatus,
   getIsTestnet,
   formatUSDC,
-  parseUSDC,
 } from "@/lib/contracts"
 import {
   Package,
@@ -28,25 +28,18 @@ import {
 
 interface PaymentFlowProps {
   dropId: number
-  boxType: "small" | "medium" | "large"
   quantity?: number
-}
-
-const BOX_PRICES = {
-  small: 15,
-  medium: 35,
-  large: 70,
-}
-
-const BOX_ITEMS = {
-  small: 5,
-  medium: 15,
-  large: 35,
 }
 
 type Step = "connect" | "approve" | "pay" | "confirming" | "success" | "error"
 
-export function PaymentFlow({ dropId, boxType, quantity = 1 }: PaymentFlowProps) {
+/**
+ * Pay for slots straight from the buyer's wallet: approve USDC, then buySlot().
+ * The price is the contract's (getCurrentSlotPrice), never a number from this
+ * page, and the receipt NFT is minted to the buyer, who can claim any refund
+ * from the contract themselves.
+ */
+export function PaymentFlow({ dropId, quantity = 1 }: PaymentFlowProps) {
   const { address, isConnected } = useAccount()
   const [step, setStep] = useState<Step>("connect")
   const [error, setError] = useState<string | null>(null)
@@ -54,10 +47,35 @@ export function PaymentFlow({ dropId, boxType, quantity = 1 }: PaymentFlowProps)
   const isTestnet = getIsTestnet()
   const contracts = isTestnet ? CONTRACTS.baseSepolia : CONTRACTS.base
 
-  const basePrice = BOX_PRICES[boxType]
-  const totalPrice = basePrice * quantity
-  const totalItems = BOX_ITEMS[boxType] * quantity
-  const priceInUSDC = parseUSDC(totalPrice)
+  const { data: drop, isLoading: isDropLoading } = useReadContract({
+    address: contracts.flashCargo,
+    abi: FLASH_CARGO_ABI,
+    functionName: "getDrop",
+    args: [BigInt(dropId)],
+  })
+  const { data: slotPrice } = useReadContract({
+    address: contracts.flashCargo,
+    abi: FLASH_CARGO_ABI,
+    functionName: "getCurrentSlotPrice",
+    args: [BigInt(dropId)],
+  })
+
+  // Same total the server quotes (lib/pricing.ts): the next slot's price times quantity.
+  const priceInUSDC = slotPrice !== undefined ? slotPrice * BigInt(quantity) : undefined
+  const totalPrice = priceInUSDC !== undefined ? formatUSDC(priceInUSDC) : "—"
+  const unitPrice = slotPrice !== undefined ? formatUSDC(slotPrice) : "—"
+
+  const [, , deadline, , totalSlots, slotsSold, status] = drop ?? []
+  const onSale =
+    drop !== undefined &&
+    slotPrice !== undefined &&
+    slotPrice > BigInt(0) &&
+    status === DropStatus.FUNDING &&
+    deadline !== undefined &&
+    Number(deadline) * 1000 > Date.now() &&
+    totalSlots !== undefined &&
+    slotsSold !== undefined &&
+    slotsSold + BigInt(quantity) <= totalSlots
 
   // Check USDC allowance
   const { data: allowance, refetch: refetchAllowance } = useReadContract({
@@ -103,9 +121,9 @@ export function PaymentFlow({ dropId, boxType, quantity = 1 }: PaymentFlowProps)
   useEffect(() => {
     if (!isConnected) {
       setStep("connect")
-    } else if (allowance !== undefined && allowance < priceInUSDC) {
+    } else if (allowance !== undefined && priceInUSDC !== undefined && allowance < priceInUSDC) {
       setStep("approve")
-    } else if (allowance !== undefined && allowance >= priceInUSDC) {
+    } else if (allowance !== undefined && priceInUSDC !== undefined && allowance >= priceInUSDC) {
       setStep("pay")
     }
   }, [isConnected, allowance, priceInUSDC])
@@ -134,6 +152,7 @@ export function PaymentFlow({ dropId, boxType, quantity = 1 }: PaymentFlowProps)
   }, [approveError, buyError])
 
   const handleApprove = () => {
+    if (priceInUSDC === undefined) return
     approve({
       address: contracts.usdc,
       abi: ERC20_ABI,
@@ -151,7 +170,26 @@ export function PaymentFlow({ dropId, boxType, quantity = 1 }: PaymentFlowProps)
     })
   }
 
-  const insufficientBalance = balance !== undefined && balance < priceInUSDC
+  const insufficientBalance = balance !== undefined && priceInUSDC !== undefined && balance < priceInUSDC
+
+  // Once a purchase is under way, keep showing it even if the drop sells out on the next read.
+  if (!onSale && step !== "confirming" && step !== "success") {
+    return (
+      <Card className="p-6 bg-card border-primary/20 text-center">
+        {isDropLoading ? (
+          <Loader2 className="w-8 h-8 text-primary mx-auto animate-spin" />
+        ) : (
+          <>
+            <AlertCircle className="w-10 h-10 text-muted-foreground mx-auto mb-3" />
+            <p className="font-medium mb-1">Drop #{dropId} is not on sale</p>
+            <p className="text-sm text-muted-foreground">
+              It does not exist on the contract, has closed, or has fewer than {quantity} boxes left.
+            </p>
+          </>
+        )}
+      </Card>
+    )
+  }
 
   return (
     <Card className="p-6 bg-card border-primary/20">
@@ -163,23 +201,19 @@ export function PaymentFlow({ dropId, boxType, quantity = 1 }: PaymentFlowProps)
         </div>
         <Badge className="bg-primary/10 text-primary border-primary/30">
           <Package className="w-3 h-3 mr-1" />
-          {boxType.toUpperCase()}
+          USDC on Base
         </Badge>
       </div>
 
       {/* Order Summary */}
       <div className="space-y-3 mb-6 p-4 bg-secondary/30 rounded-lg">
         <div className="flex justify-between">
-          <span className="text-muted-foreground">Box Type</span>
-          <span className="font-medium capitalize">{boxType} ({BOX_ITEMS[boxType]} items)</span>
+          <span className="text-muted-foreground">Price per box</span>
+          <span className="font-medium">${unitPrice} USDC</span>
         </div>
         <div className="flex justify-between">
           <span className="text-muted-foreground">Quantity</span>
           <span className="font-medium">{quantity}</span>
-        </div>
-        <div className="flex justify-between">
-          <span className="text-muted-foreground">Total Items</span>
-          <span className="font-medium">{totalItems} items</span>
         </div>
         <div className="border-t border-border pt-3 flex justify-between">
           <span className="font-bold">Total</span>
@@ -329,16 +363,13 @@ export function PaymentFlow({ dropId, boxType, quantity = 1 }: PaymentFlowProps)
         )}
       </div>
 
-      {/* Trust Badges */}
-      <div className="mt-6 pt-4 border-t border-border flex items-center justify-center gap-4 text-xs text-muted-foreground">
-        <span className="flex items-center gap-1">
+      {/* How the money is held */}
+      <div className="mt-6 pt-4 border-t border-border text-xs text-muted-foreground text-center space-y-1">
+        <p className="flex items-center justify-center gap-1">
           <Shield className="w-3 h-3" />
-          Escrow Protected
-        </span>
-        <span className="flex items-center gap-1">
-          <Check className="w-3 h-3" />
-          Auto-Refund Guarantee
-        </span>
+          Paid into the FlashCargo escrow contract; the receipt NFT is yours.
+        </p>
+        <p>If the drop is cancelled or not released by its deadline, claim your deposit back from the contract.</p>
       </div>
     </Card>
   )

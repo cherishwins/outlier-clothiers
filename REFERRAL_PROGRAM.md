@@ -200,10 +200,10 @@ export async function ReferralLeaderboard() {
 💰 EARN WHILE YOU FLEX 💰
 
 Refer friends to OUTLIER CLOTHIERS
-→ They get 80% off designer goods
+→ They get mystery boxes from manifested liquidation loads
 → You get 10% commission on EVERY sale
 
-No limits. No catches. Pure passive income.
+No limits.
 
 Get your link: /earnings
 

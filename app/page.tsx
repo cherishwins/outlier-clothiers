@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
-import { Package, Boxes, Crown, Zap, Shield, Globe, ChevronDown } from "lucide-react"
+import { Package, Boxes, Crown, Zap, Shield, Globe, ChevronDown, Truck } from "lucide-react"
 import Image from "next/image"
 import { useEffect, useState } from "react"
 
@@ -87,13 +87,13 @@ export default function Home() {
           </p>
 
           <p className="text-muted-foreground max-w-xl mx-auto text-lg leading-relaxed mb-12">
-            80% off retail. Factory overstock. Zero middlemen.
+            Mystery boxes from manifested liquidation loads and factory overstock.
             <br />
-            <span className="text-primary/60">Pay with Telegram Stars or TON.</span>
+            <span className="text-primary/60">Pay with Telegram Stars, USDC or card.</span>
           </p>
 
           {/* CTA Buttons */}
-          <div className="flex flex-col sm:flex-row gap-4 justify-center mb-16">
+          <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link href="/drops">
               <Button
                 size="lg"
@@ -115,23 +115,6 @@ export default function Home() {
             </Link>
           </div>
 
-          {/* Stats Bar */}
-          <div className="flex flex-wrap justify-center gap-8 md:gap-16 text-center">
-            <div className="group">
-              <div className="text-4xl md:text-5xl font-bold text-primary group-hover:scale-110 transition-transform">80%</div>
-              <div className="text-xs uppercase tracking-wider text-muted-foreground mt-1">Off Retail</div>
-            </div>
-            <div className="w-px h-16 bg-gradient-to-b from-transparent via-primary/30 to-transparent hidden md:block" />
-            <div className="group">
-              <div className="text-4xl md:text-5xl font-bold text-primary group-hover:scale-110 transition-transform">0</div>
-              <div className="text-xs uppercase tracking-wider text-muted-foreground mt-1">Risk Model</div>
-            </div>
-            <div className="w-px h-16 bg-gradient-to-b from-transparent via-primary/30 to-transparent hidden md:block" />
-            <div className="group">
-              <div className="text-4xl md:text-5xl font-bold text-primary group-hover:scale-110 transition-transform">∞</div>
-              <div className="text-xs uppercase tracking-wider text-muted-foreground mt-1">Self-Reliance</div>
-            </div>
-          </div>
         </div>
 
         {/* Scroll Indicator */}
@@ -149,15 +132,15 @@ export default function Home() {
             <span className="text-primary">HOW</span> IT WORKS
           </h2>
           <p className="text-center text-muted-foreground mb-16 max-w-2xl mx-auto">
-            We flip the luxury game. Factories overproduce. Orders get canceled. We buy the surplus. You get designer goods at wholesale prices.
+            Retailers and factories liquidate returns and overstock by the pallet. We pre-sell mystery boxes from one manifested load at a time, and only buy it once its drop is funded.
           </p>
 
           <div className="grid md:grid-cols-4 gap-6">
             {[
               { step: "01", title: "WE FIND", desc: "Liquidation pallets from ViaTrading, B-Stock, factory surplus", icon: Globe },
               { step: "02", title: "YOU FUND", desc: "Pre-order mystery boxes before we buy. See the manifest.", icon: Package },
-              { step: "03", title: "WE BUY", desc: "Once funded, we purchase. Zero inventory risk.", icon: Shield },
-              { step: "04", title: "YOU WIN", desc: "Get 80% off retail. Shipped in 7-10 days.", icon: Zap },
+              { step: "03", title: "WE BUY", desc: "If the drop is funded before its deadline, we buy the load. If not, deposits are refundable from escrow.", icon: Shield },
+              { step: "04", title: "WE SHIP", desc: "We pack boxes at random from the load and ship them with tracking.", icon: Truck },
             ].map((item, i) => (
               <div
                 key={i}
@@ -183,7 +166,7 @@ export default function Home() {
             CHOOSE YOUR <span className="text-primary">PATH</span>
           </h2>
           <p className="text-center text-muted-foreground mb-16">
-            Three ways to score. Pick your play.
+            Three ways in.
           </p>
 
           <div className="grid md:grid-cols-3 gap-8">
@@ -195,7 +178,7 @@ export default function Home() {
                 <Package className="w-14 h-14 text-primary mb-6 group-hover:scale-110 transition-transform" />
                 <h3 className="text-3xl font-bold mb-4 group-hover:text-primary transition-colors">MYSTERY DROPS</h3>
                 <p className="text-muted-foreground mb-8 leading-relaxed">
-                  Treasure hunt vibes. Pre-order mystery boxes packed with manifested luxury goods. Every box is a win.
+                  Pre-order a mystery box packed at random from a manifested liquidation load. Contents and their value vary.
                 </p>
                 <div className="flex items-center text-primary font-semibold">
                   Browse Drops
@@ -212,7 +195,7 @@ export default function Home() {
                 <Boxes className="w-14 h-14 text-green-500 mb-6 group-hover:scale-110 transition-transform" />
                 <h3 className="text-3xl font-bold mb-4 group-hover:text-green-500 transition-colors">ACTIVE PALLETS</h3>
                 <p className="text-muted-foreground mb-8 leading-relaxed">
-                  Real-time funding. See exactly what pallet we&apos;re buying. Watch progress. Vote with your wallet.
+                  Funding progress read live from the escrow contract, with the manifest of the load each drop buys.
                 </p>
                 <div className="flex items-center text-green-500 font-semibold">
                   View Pallets
@@ -229,7 +212,7 @@ export default function Home() {
                 <Crown className="w-14 h-14 text-primary mb-6 group-hover:scale-110 transition-transform" />
                 <h3 className="text-3xl font-bold mb-4 group-hover:text-primary transition-colors">JUCHE GANG</h3>
                 <p className="text-muted-foreground mb-8 leading-relaxed">
-                  VIP network for resellers and builders. Early access. Bulk pricing. Member-only deals. Self-reliance.
+                  VIP network for resellers and builders, on Telegram. Early word on drops. Self-reliance.
                 </p>
                 <div className="flex items-center text-primary font-semibold">
                   Join Gang
@@ -247,7 +230,7 @@ export default function Home() {
 
         <div className="relative z-10 max-w-4xl mx-auto text-center">
           <h2 className="text-4xl md:text-6xl font-bold mb-6">
-            READY TO <span className="text-primary">WIN</span>?
+            WANT <span className="text-primary">FIRST ACCESS</span>?
           </h2>
           <p className="text-xl text-muted-foreground mb-10">
             Join the Telegram. Get first access to drops. Build with us.
@@ -266,7 +249,7 @@ export default function Home() {
           </a>
 
           <p className="mt-8 text-sm text-muted-foreground">
-            Pay with <span className="text-primary">Telegram Stars</span> • <span className="text-primary">TON</span> • <span className="text-primary">USDC</span>
+            Pay with <span className="text-primary">Telegram Stars</span> • <span className="text-primary">USDC</span> • <span className="text-primary">Card</span>
           </p>
         </div>
       </section>

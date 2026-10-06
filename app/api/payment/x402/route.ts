@@ -7,6 +7,7 @@ import {
   verifyAuthorization,
 } from "x402-merchant"
 
+import { parseDropId } from "@/lib/drop-id"
 import { attachOrder, claimX402, NotForSale, seenNonce, settleX402, x402Enabled, x402Quote, x402Token } from "@/lib/x402"
 
 export const dynamic = "force-dynamic"
@@ -14,8 +15,8 @@ export const dynamic = "force-dynamic"
 /**
  * x402 for a drop. Spec: https://github.com/coinbase/x402
  *
- *   GET  /api/payment/x402?dropId=1&quantity=2   -> 402: the price, v1 body + v2 PAYMENT-REQUIRED header
- *   POST /api/payment/x402?dropId=1&quantity=2   -> X-PAYMENT (or PAYMENT-SIGNATURE) header with the
+ *   GET  /api/payment/x402?dropId=0&quantity=2   -> 402: the price, v1 body + v2 PAYMENT-REQUIRED header
+ *   POST /api/payment/x402?dropId=0&quantity=2   -> X-PAYMENT (or PAYMENT-SIGNATURE) header with the
  *        signed authorization; optional JSON body { customerEmail, shippingAddress }.
  *
  * Money is never read from the request. The amount comes from the contract's
@@ -27,10 +28,11 @@ export const dynamic = "force-dynamic"
  */
 
 function params(req: NextRequest): { dropId: number; quantity: number } | NextResponse {
-  const dropId = Number(req.nextUrl.searchParams.get("dropId"))
+  // Drops are numbered from 0 on the contract; an absent dropId is not drop 0.
+  const dropId = parseDropId(req.nextUrl.searchParams.get("dropId"))
   const quantity = Number(req.nextUrl.searchParams.get("quantity") ?? "1")
-  if (!Number.isInteger(dropId) || dropId <= 0) {
-    return NextResponse.json({ error: "dropId is required" }, { status: 400 })
+  if (dropId === null) {
+    return NextResponse.json({ error: "dropId must be a non-negative integer" }, { status: 400 })
   }
   if (!Number.isInteger(quantity) || quantity <= 0 || quantity > 100) {
     return NextResponse.json({ error: "quantity must be between 1 and 100" }, { status: 400 })

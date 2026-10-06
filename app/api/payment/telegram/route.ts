@@ -1,4 +1,5 @@
 import { type NextRequest, NextResponse } from "next/server"
+import { parseDropId } from "@/lib/drop-id"
 import { quoteDrop } from "@/lib/pricing"
 
 const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN
@@ -16,13 +17,6 @@ interface TelegramPaymentRequest {
   shippingAddress?: object
 }
 
-// Box prices in Stars (1 Star ≈ $0.01)
-const BOX_PRICES_STARS = {
-  small: 1500, // $15
-  medium: 3500, // $35
-  large: 7000, // $70
-}
-
 export async function POST(request: NextRequest) {
   try {
     const body: TelegramPaymentRequest = await request.json()
@@ -36,24 +30,36 @@ export async function POST(request: NextRequest) {
       shippingAddress,
     } = body
 
-    const resolvedDropId = dropId ?? 0
+    // Drops are numbered from 0 on the contract; an absent dropId is not drop 0.
+    const resolvedDropId = parseDropId(dropId)
     const isTestnet = process.env.NEXT_PUBLIC_TESTNET === "true"
 
-    if (!Number.isFinite(resolvedDropId) || resolvedDropId <= 0) {
+    if (resolvedDropId === null) {
       return NextResponse.json(
-        { success: false, error: "dropId is required" },
+        { success: false, error: "dropId must be a non-negative integer" },
         { status: 400 }
       )
     }
 
-    // Calculate total Stars from contract slot price (fallback to static mapping)
+    // Total Stars from the contract's slot price. There is no fallback price:
+    // the webhook re-quotes and refuses any invoice that does not match.
     let totalStars: number
     try {
       const quote = await quoteDrop({ dropId: resolvedDropId, quantity, isTestnet })
       totalStars = quote.totalStars
+      if (quote.totalUsdc <= BigInt(0)) {
+        // No price on the contract: the drop does not exist there (yet).
+        return NextResponse.json(
+          { success: false, error: `drop #${resolvedDropId} is not on sale` },
+          { status: 409 }
+        )
+      }
     } catch (error) {
-      console.warn("[Telegram] Falling back to static Stars pricing:", error)
-      totalStars = BOX_PRICES_STARS[boxType] * quantity
+      console.error("[Telegram] Could not price drop:", error)
+      return NextResponse.json(
+        { success: false, error: "Could not price this drop right now" },
+        { status: 503 }
+      )
     }
 
     // Build invoice payload (will be passed back in webhook)
@@ -90,7 +96,7 @@ export async function POST(request: NextRequest) {
 
     // Fallback: Return bot deep link for manual payment
     const botUsername = process.env.TELEGRAM_BOT_USERNAME || "OutlierClothiersBot"
-    const paymentUrl = `https://t.me/${botUsername}?start=pay_${boxType}_${quantity}_${dropId || 0}`
+    const paymentUrl = `https://t.me/${botUsername}?start=pay_${boxType}_${quantity}_${resolvedDropId}`
 
     return NextResponse.json({
       success: true,
@@ -195,12 +201,12 @@ export async function GET() {
   return NextResponse.json({
     status: "Telegram Payment API Active",
     supported_currencies: ["XTR (Telegram Stars)"],
-    box_prices_stars: BOX_PRICES_STARS,
+    pricing: "Stars are quoted from the drop's slot price on the FlashCargo contract",
     usage: {
       POST: "Create payment invoice",
       params: {
         productName: "Product name",
-        stars: "Price in Stars (optional, calculated from boxType)",
+        stars: "Ignored; the price is quoted from the contract",
         dropId: "Drop ID",
         quantity: "Number of boxes",
         boxType: "small | medium | large",

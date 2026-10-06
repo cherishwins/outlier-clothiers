@@ -33,11 +33,11 @@ export function JucheHero() {
         </h1>
 
         <p className="text-xl md:text-2xl text-muted-foreground mb-8 max-w-3xl mx-auto text-pretty leading-relaxed">
-          The VIP network for resellers, flippers, and arbitrage hustlers. Get early pallet access, bulk pricing, and
-          member-only liquidation deals. Self-reliance means buying smart, not buying expensive.
+          The VIP network for resellers, flippers, and arbitrage hustlers, on Telegram. Early word on new pallet drops
+          and manifest previews. Self-reliance means buying smart, not buying expensive.
         </p>
 
-        <div className="flex flex-col sm:flex-row gap-4 justify-center mb-16">
+        <div className="flex flex-col sm:flex-row gap-4 justify-center">
           <a href="https://t.me/JucheGang" target="_blank" rel="noopener noreferrer">
             <Button size="lg" className="text-lg px-8 py-6 bg-primary hover:bg-primary/90 text-primary-foreground">
               <TrendingUp className="w-5 h-5 mr-2" />
@@ -56,20 +56,6 @@ export function JucheHero() {
           </a>
         </div>
 
-        <div className="grid grid-cols-3 gap-8 max-w-3xl mx-auto">
-          <div className="text-center">
-            <div className="text-3xl md:text-4xl font-bold text-primary mb-2">{"<200"}</div>
-            <div className="text-sm text-muted-foreground uppercase tracking-wider">VIP Members</div>
-          </div>
-          <div className="text-center border-x border-border">
-            <div className="text-3xl md:text-4xl font-bold text-primary mb-2">30%</div>
-            <div className="text-sm text-muted-foreground uppercase tracking-wider">Extra Discount</div>
-          </div>
-          <div className="text-center">
-            <div className="text-3xl md:text-4xl font-bold text-primary mb-2">24h</div>
-            <div className="text-sm text-muted-foreground uppercase tracking-wider">Early Access</div>
-          </div>
-        </div>
       </div>
     </section>
   )

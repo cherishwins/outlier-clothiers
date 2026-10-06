@@ -9,12 +9,12 @@ const playfair = Playfair_Display({ subsets: ["latin"], variable: "--font-serif"
 const inter = Inter({ subsets: ["latin"], variable: "--font-sans" })
 
 export const metadata: Metadata = {
-  title: "OUTLIER CLOTHIERS | Exclusive Streetwear Drops",
-  description: "Premium streetwear for the Telegram generation. Limited drops. Exclusive access. Accept Stars & TON.",
+  title: "OUTLIER CLOTHIERS | Liquidation Mystery Box Drops",
+  description: "Mystery boxes from manifested liquidation loads, pre-funded through on-chain escrow. Pay with Telegram Stars, USDC or card.",
   metadataBase: new URL("https://outlierclothiers.com"),
   openGraph: {
-    title: "OUTLIER CLOTHIERS | Exclusive Streetwear Drops",
-    description: "Premium streetwear for the Telegram generation. Limited drops. Exclusive access.",
+    title: "OUTLIER CLOTHIERS | Liquidation Mystery Box Drops",
+    description: "Mystery boxes from manifested liquidation loads, pre-funded through on-chain escrow.",
     url: "https://outlierclothiers.com",
     siteName: "OUTLIER CLOTHIERS",
     images: [
@@ -29,8 +29,8 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "OUTLIER CLOTHIERS | Exclusive Streetwear Drops",
-    description: "Premium streetwear for the Telegram generation.",
+    title: "OUTLIER CLOTHIERS | Liquidation Mystery Box Drops",
+    description: "Mystery boxes from manifested liquidation loads, pre-funded through on-chain escrow.",
     images: ["/og-image.jpg"],
   },
   icons: {

@@ -1,43 +1,19 @@
-"use client"
-
-import { useState } from "react"
-import { PaymentFlow } from "@/components/payment-flow"
-import { WalletButton } from "@/components/wallet-connect"
-import { Button } from "@/components/ui/button"
-import { Card } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
-import { Package, ArrowLeft, Sparkles } from "lucide-react"
 import Link from "next/link"
 import Image from "next/image"
+import { ArrowLeft } from "lucide-react"
+import { CheckoutPanel } from "@/components/checkout-panel"
+import { WalletButton } from "@/components/wallet-connect"
+import { parseDropId } from "@/lib/drop-id"
 
-const boxOptions = [
-  {
-    type: "small" as const,
-    name: "Starter Box",
-    price: 15,
-    items: 5,
-    description: "Perfect for trying us out",
-  },
-  {
-    type: "medium" as const,
-    name: "Value Box",
-    price: 35,
-    items: 15,
-    description: "Best value per item",
-    popular: true,
-  },
-  {
-    type: "large" as const,
-    name: "Treasure Box",
-    price: 70,
-    items: 35,
-    description: "Maximum mystery, maximum savings",
-  },
-]
-
-export default function CheckoutPage() {
-  const [selectedBox, setSelectedBox] = useState<"small" | "medium" | "large" | null>(null)
-  const [quantity, setQuantity] = useState(1)
+// /checkout?dropId=N: pay for drop N from your own wallet. The drop, its price
+// and whether it is on sale all come from the contract.
+export default async function CheckoutPage({
+  searchParams,
+}: {
+  searchParams: Promise<Record<string, string | string[] | undefined>>
+}) {
+  const { dropId: raw } = await searchParams
+  const dropId = parseDropId(typeof raw === "string" ? raw : undefined)
 
   return (
     <main className="min-h-screen bg-background">
@@ -61,119 +37,20 @@ export default function CheckoutPage() {
         <h1 className="text-4xl font-bold mb-2">
           <span className="text-primary">Mystery Box</span> Checkout
         </h1>
-        <p className="text-muted-foreground mb-8">
-          Drop #1: Luxury Mix - 154K items from top brands
-        </p>
 
-        {!selectedBox ? (
-          <>
-            <h2 className="text-xl font-semibold mb-6">Select Your Box Size</h2>
-            <div className="grid md:grid-cols-3 gap-6 mb-8">
-              {boxOptions.map((box) => (
-                <Card
-                  key={box.type}
-                  className={`relative p-6 cursor-pointer transition-all hover:border-primary ${
-                    selectedBox === box.type ? "border-primary bg-primary/5" : "border-border"
-                  }`}
-                  onClick={() => setSelectedBox(box.type)}
-                >
-                  {box.popular && (
-                    <Badge className="absolute -top-2 -right-2 bg-primary text-primary-foreground">
-                      <Sparkles className="w-3 h-3 mr-1" />
-                      Popular
-                    </Badge>
-                  )}
-                  <Package className="w-10 h-10 text-primary mb-4" />
-                  <h3 className="text-xl font-bold mb-1">{box.name}</h3>
-                  <p className="text-sm text-muted-foreground mb-4">{box.description}</p>
-                  <div className="flex items-baseline gap-2">
-                    <span className="text-3xl font-bold text-primary">${box.price}</span>
-                    <span className="text-muted-foreground">USDC</span>
-                  </div>
-                  <p className="text-sm text-muted-foreground mt-2">
-                    {box.items} mystery items
-                  </p>
-                  <Button
-                    className="w-full mt-4 bg-primary hover:bg-primary/90"
-                    onClick={() => setSelectedBox(box.type)}
-                  >
-                    Select
-                  </Button>
-                </Card>
-              ))}
-            </div>
-          </>
+        {dropId === null ? (
+          <p className="text-muted-foreground mt-6">
+            No drop selected. Pick one on the{" "}
+            <Link href="/drops" className="text-primary hover:underline">
+              drops page
+            </Link>
+            .
+          </p>
         ) : (
-          <div className="grid md:grid-cols-2 gap-8">
-            {/* Box Selection Summary */}
-            <div>
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="text-xl font-semibold">Your Selection</h2>
-                <Button variant="ghost" size="sm" onClick={() => setSelectedBox(null)}>
-                  Change
-                </Button>
-              </div>
-
-              <Card className="p-6 mb-6">
-                <div className="flex items-start gap-4">
-                  <div className="w-16 h-16 bg-primary/10 rounded-lg flex items-center justify-center">
-                    <Package className="w-8 h-8 text-primary" />
-                  </div>
-                  <div className="flex-1">
-                    <h3 className="text-lg font-bold capitalize">{selectedBox} Box</h3>
-                    <p className="text-sm text-muted-foreground">
-                      {boxOptions.find((b) => b.type === selectedBox)?.items} mystery items
-                    </p>
-                    <p className="text-xl font-bold text-primary mt-2">
-                      ${boxOptions.find((b) => b.type === selectedBox)?.price} USDC
-                    </p>
-                  </div>
-                </div>
-
-                <div className="mt-6 pt-4 border-t border-border">
-                  <label className="text-sm text-muted-foreground mb-2 block">Quantity</label>
-                  <div className="flex items-center gap-4">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                    >
-                      -
-                    </Button>
-                    <span className="text-xl font-bold w-8 text-center">{quantity}</span>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setQuantity(Math.min(10, quantity + 1))}
-                    >
-                      +
-                    </Button>
-                  </div>
-                </div>
-              </Card>
-
-              {/* What's Inside */}
-              <Card className="p-6">
-                <h3 className="font-semibold mb-4">What Could Be Inside</h3>
-                <ul className="space-y-2 text-sm text-muted-foreground">
-                  <li>- Essie, Maybelline, L'Oreal cosmetics</li>
-                  <li>- BOZZOLO, ZENANA, KAVIO apparel</li>
-                  <li>- Designer sunglasses</li>
-                  <li>- Premium shoes</li>
-                  <li>- Skincare products</li>
-                </ul>
-                <p className="text-xs text-muted-foreground mt-4">
-                  * Items are randomly selected from manifested inventory
-                </p>
-              </Card>
-            </div>
-
-            {/* Payment Flow */}
-            <div>
-              <h2 className="text-xl font-semibold mb-4">Complete Payment</h2>
-              <PaymentFlow dropId={0} boxType={selectedBox} quantity={quantity} />
-            </div>
-          </div>
+          <>
+            <p className="text-muted-foreground mb-8">Drop #{dropId}, paid from your own wallet in USDC on Base.</p>
+            <CheckoutPanel dropId={dropId} />
+          </>
         )}
       </div>
     </main>
