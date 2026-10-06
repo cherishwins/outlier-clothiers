@@ -50,6 +50,7 @@ model Order {
   receipt_nft_id    String?
   receipt_nft_tx    String?
   
+  // pending | paid (escrowed) | paid_unescrowed (money received, buySlot not confirmed) | shipped | delivered | refunded
   status            String   @default("pending")
   paid_at           DateTime?
   shipped_at        DateTime?

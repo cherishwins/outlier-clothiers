@@ -5,6 +5,21 @@ import { verifyPaymentOnChain, waitForTransaction } from "./payment-verification
 // Initialize Prisma client
 const prisma = new PrismaClient()
 
+/**
+ * Order statuses written by settleOrder. `paid` means the money reached the
+ * escrow contract (a buySlot() for this order was confirmed on chain).
+ * `paid_unescrowed` means the payment was received but no buySlot() was
+ * confirmed: as far as the server knows the money is in the shop's wallet,
+ * outside escrow, and the operator has to reconcile it (check the chain, retry
+ * the slot, or refund). The admin dashboard lists these on their own.
+ * Order.status is a plain String column, so no migration is involved.
+ */
+export const ORDER_STATUS = {
+  PENDING: "pending",
+  PAID: "paid",
+  PAID_UNESCROWED: "paid_unescrowed",
+} as const
+
 // Shipping address interface
 interface ShippingAddress {
   name?: string
@@ -98,8 +113,10 @@ export async function settleOrder(request: SettlementRequest): Promise<OrderResu
         })
       : null
 
-    // If we've already processed this payment end-to-end, return the existing order
-    if (existingByPayment && existingByPayment.status !== "pending") {
+    // If we've already processed this payment end-to-end, return the existing order.
+    // A paid_unescrowed order is returned too, not retried: a second buySlot()
+    // for the same payment is for the operator to decide.
+    if (existingByPayment && existingByPayment.status !== ORDER_STATUS.PENDING) {
       console.log("[Settlement] Idempotent replay detected. Returning existing order:", existingByPayment.id)
       return existingByPayment
     }
@@ -160,7 +177,7 @@ export async function settleOrder(request: SettlementRequest): Promise<OrderResu
       payment_amount: paymentAmount,
       payment_currency: paymentMethod === "telegram" ? "STARS" : "USDC",
       payment_tx_hash: idempotencyKey || null,
-      status: "pending",
+      status: ORDER_STATUS.PENDING,
     }
 
     const order = existingByPayment
@@ -175,6 +192,8 @@ export async function settleOrder(request: SettlementRequest): Promise<OrderResu
     // 5. Handle payment method specific logic
     let receiptNftId: string | null = null
     let receiptNftTx: string | null = null
+    // True only once a buySlot() for this order is confirmed on chain.
+    let escrowed = false
 
     if (paymentMethod === "x402" && paymentTxHash) {
       // A buySlot() sent by the buyer mints the NFT in the payment tx. An
@@ -187,15 +206,19 @@ export async function settleOrder(request: SettlementRequest): Promise<OrderResu
       if (nftDetails) {
         receiptNftId = nftDetails.tokenId
         receiptNftTx = paymentTxHash
+        escrowed = true
       }
     }
-    if (!receiptNftId) {
+    if (!escrowed) {
       // Off-chain (or wallet-collected) payment - need to execute buySlot via CDP wallet
       try {
         const { executeBuySlot } = await import("./cdp-wallet")
         const buySlotResult = await executeBuySlot(dropId, quantity, customerWallet)
         
         if (buySlotResult.success) {
+          // executeBuySlot only reports success after the receipt says so.
+          escrowed = true
+          receiptNftId = buySlotResult.tokenId ?? null
           receiptNftTx = buySlotResult.txHash ?? null
           // Wait for transaction and extract NFT ID
           if (buySlotResult.txHash) {
@@ -213,20 +236,27 @@ export async function settleOrder(request: SettlementRequest): Promise<OrderResu
               }
             }
           }
+        } else {
+          console.error("[Settlement] CDP buySlot did not land:", buySlotResult.error, buySlotResult.txHash ?? "")
         }
       } catch (error) {
         console.error("[Settlement] CDP buySlot failed:", error)
-        // Continue without NFT - can be minted later
       }
     }
 
-    // 6. Update order with NFT details and mark as paid
+    if (!escrowed) {
+      // The payment stands; the escrow deposit does not. Record that plainly
+      // instead of letting the order look like every other paid order.
+      console.error("[Settlement] Order paid but NOT escrowed; needs reconciliation:", order.id)
+    }
+
+    // 6. Update order with NFT details; paid only if the money reached escrow
     const updatedOrder = await prisma.order.update({
       where: { id: order.id },
       data: {
         receipt_nft_id: receiptNftId,
         receipt_nft_tx: receiptNftTx,
-        status: "paid",
+        status: escrowed ? ORDER_STATUS.PAID : ORDER_STATUS.PAID_UNESCROWED,
         paid_at: new Date(),
       },
     })
