@@ -54,6 +54,13 @@ export async function POST(request: NextRequest) {
       quantity: resolvedQuantity,
       isTestnet,
     })
+    if (quote.totalUsdc <= BigInt(0)) {
+      // No price on the contract: the drop does not exist there (yet).
+      return NextResponse.json(
+        { success: false, error: `drop #${resolvedDropId} is not on sale` },
+        { status: 409 }
+      )
+    }
     const amountUsd = quote.totalUsd.toFixed(2)
 
     console.log("[Coinbase] Creating charge:", {

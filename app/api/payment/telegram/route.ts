@@ -47,6 +47,13 @@ export async function POST(request: NextRequest) {
     try {
       const quote = await quoteDrop({ dropId: resolvedDropId, quantity, isTestnet })
       totalStars = quote.totalStars
+      if (quote.totalUsdc <= BigInt(0)) {
+        // No price on the contract: the drop does not exist there (yet).
+        return NextResponse.json(
+          { success: false, error: `drop #${resolvedDropId} is not on sale` },
+          { status: 409 }
+        )
+      }
     } catch (error) {
       console.error("[Telegram] Could not price drop:", error)
       return NextResponse.json(
