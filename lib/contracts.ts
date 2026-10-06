@@ -34,6 +34,7 @@ export function isMainnetReady(): boolean {
 // FlashCargo ABI (minimal for frontend)
 export const FLASH_CARGO_ABI = parseAbi([
   // Read functions
+  'function nextDropId() view returns (uint256)',
   'function getDrop(uint256 dropId) view returns (uint256 targetAmount, uint256 raisedAmount, uint256 deadline, uint256 slotPrice, uint256 totalSlots, uint256 slotsSold, uint8 status, string manifestUri)',
   'function getCurrentSlotPrice(uint256 dropId) view returns (uint256)',
   'function getFundingProgress(uint256 dropId) view returns (uint256)',

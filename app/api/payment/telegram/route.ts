@@ -17,13 +17,6 @@ interface TelegramPaymentRequest {
   shippingAddress?: object
 }
 
-// Box prices in Stars (1 Star ≈ $0.01)
-const BOX_PRICES_STARS = {
-  small: 1500, // $15
-  medium: 3500, // $35
-  large: 7000, // $70
-}
-
 export async function POST(request: NextRequest) {
   try {
     const body: TelegramPaymentRequest = await request.json()
@@ -48,14 +41,18 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Calculate total Stars from contract slot price (fallback to static mapping)
+    // Total Stars from the contract's slot price. There is no fallback price:
+    // the webhook re-quotes and refuses any invoice that does not match.
     let totalStars: number
     try {
       const quote = await quoteDrop({ dropId: resolvedDropId, quantity, isTestnet })
       totalStars = quote.totalStars
     } catch (error) {
-      console.warn("[Telegram] Falling back to static Stars pricing:", error)
-      totalStars = BOX_PRICES_STARS[boxType] * quantity
+      console.error("[Telegram] Could not price drop:", error)
+      return NextResponse.json(
+        { success: false, error: "Could not price this drop right now" },
+        { status: 503 }
+      )
     }
 
     // Build invoice payload (will be passed back in webhook)
@@ -197,12 +194,12 @@ export async function GET() {
   return NextResponse.json({
     status: "Telegram Payment API Active",
     supported_currencies: ["XTR (Telegram Stars)"],
-    box_prices_stars: BOX_PRICES_STARS,
+    pricing: "Stars are quoted from the drop's slot price on the FlashCargo contract",
     usage: {
       POST: "Create payment invoice",
       params: {
         productName: "Product name",
-        stars: "Price in Stars (optional, calculated from boxType)",
+        stars: "Ignored; the price is quoted from the contract",
         dropId: "Drop ID",
         quantity: "Number of boxes",
         boxType: "small | medium | large",

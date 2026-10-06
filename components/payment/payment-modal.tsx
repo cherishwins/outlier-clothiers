@@ -15,7 +15,6 @@ interface PaymentModalProps {
   product: {
     name: string
     price: number // in Stars
-    tonPrice: number
     usdPrice?: number
     dropId: number // contract drop id; drops are numbered from 0
     quantity?: number
@@ -108,7 +107,7 @@ export function PaymentModal({ isOpen, onClose, product, onPaymentSuccess }: Pay
         onPaymentSuccess?.()
         onClose()
       } else if (method === "telegram") {
-        // Telegram Stars/TON payment via Telegram WebApp API
+        // Telegram Stars payment via Telegram WebApp API
         const tg = (window as unknown as { Telegram?: { WebApp?: any } })?.Telegram?.WebApp
         const telegramUserId = tg?.initDataUnsafe?.user?.id as number | undefined
 
@@ -218,14 +217,14 @@ export function PaymentModal({ isOpen, onClose, product, onPaymentSuccess }: Pay
                     <span className="font-semibold">Crypto (x402)</span>
                     <Badge className="bg-purple-500/10 text-purple-400 text-xs">Instant</Badge>
                   </div>
-                  <p className="text-xs text-muted-foreground">USDC, USDT, or stablecoins</p>
+                  <p className="text-xs text-muted-foreground">USDC on Base, signed in your wallet</p>
                   <p className="text-sm font-bold text-foreground mt-1">${usdPriceDisplay} USD</p>
                 </div>
               </div>
             </div>
           </button>
 
-          {/* Telegram Stars/TON */}
+          {/* Telegram Stars */}
           <button
             onClick={() => handlePayment("telegram")}
             disabled={isProcessing}
@@ -238,13 +237,11 @@ export function PaymentModal({ isOpen, onClose, product, onPaymentSuccess }: Pay
                 </div>
                 <div>
                   <div className="flex items-center gap-2 mb-1">
-                    <span className="font-semibold">Telegram Stars/TON</span>
+                    <span className="font-semibold">Telegram Stars</span>
                     <Badge className="bg-primary/10 text-primary text-xs">Native</Badge>
                   </div>
                   <p className="text-xs text-muted-foreground">Pay directly in Telegram</p>
-                  <p className="text-sm font-bold text-primary mt-1">
-                    {product.price} Stars or {product.tonPrice} TON
-                  </p>
+                  <p className="text-sm font-bold text-primary mt-1">{product.price} Stars</p>
                 </div>
               </div>
             </div>
