@@ -350,10 +350,9 @@ Thanks ${firstName}! Your order has been received.
 <b>Box Type:</b> ${boxType.toUpperCase()}
 
 <b>What's Next:</b>
-1. You'll receive an NFT receipt in your wallet
-2. Once the drop is fully funded, we'll purchase the pallet
-3. Your mystery box will ship within 7-10 days
-4. We'll send you tracking info here
+1. Once the drop is fully funded, we'll purchase the pallet
+2. We'll pack and ship your mystery box
+3. We'll send you tracking info here
 
 Questions? Reply to this message or email gm@outlierclothiers.com
 

@@ -78,7 +78,7 @@
 ```
 Hey [Name],
 
-Love your content on [specific topic]. I'm launching a liquidation marketplace on Telegram where people can buy mystery boxes of designer goods at 80% off retail.
+Love your content on [specific topic]. I'm launching a liquidation marketplace on Telegram where people can pre-order mystery boxes from manifested liquidation loads.
 
 First drop is [date]. Would you be interested in:
 1. Free mystery box in exchange for unboxing video

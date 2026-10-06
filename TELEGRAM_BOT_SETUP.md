@@ -15,7 +15,7 @@ Send these commands to BotFather:
 ```
 /setdescription
 @outlierclothiers_bot
-Luxury surplus liquidation marketplace. 80% off designer goods. Pre-funded mystery drops.
+Luxury surplus liquidation marketplace. Mystery boxes from manifested loads. Pre-funded drops with on-chain escrow.
 ```
 
 ```

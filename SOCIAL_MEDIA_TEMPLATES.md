@@ -47,7 +47,7 @@ What do you think they got? 👇
 
 ### Social Proof
 ```
-"I paid $80 and got a Hugo Boss suit worth $600. This is insane."
+"[A real customer's own words, quoted with their permission. Never write one for them.]"
 
 - @[customer]
 
@@ -71,10 +71,9 @@ NEW DROP: [Pallet Name] 🔥
 Swipe to see what's inside 👉
 
 💰 [XX] mystery boxes @ $[XX] each
-📦 Retail value: $[X,XXX]
 ⏰ Funding in progress: [X]%
 
-Every box is a gamble. Every box is a win.
+Contents are packed at random and vary in value.
 
 Link in bio to secure yours 🔗
 
@@ -112,7 +111,7 @@ This is what self-reliance looks like 💪
 ## TikTok Scripts
 
 ### Video 1: "How It Works"
-**Hook** (0-3s): "I buy designer clothes for 80% off and you can too"
+**Hook** (0-3s): "Here's how a liquidation mystery box drop works"
 
 **Body** (3-15s):
 - Show ViaTrading pallet listing
@@ -156,8 +155,8 @@ Welcome to the most exclusive liquidation network on Telegram.
 Here's what you need to know:
 
 ✅ We buy luxury surplus from factories
-✅ You get mystery boxes at 80% off retail
-✅ Pre-funded drops = zero risk for everyone
+✅ You get mystery boxes packed from a manifested load
+✅ Pre-funded drops: if one isn't released by its deadline, deposits are refundable from escrow
 ✅ Early access to best pallets
 
 Next drop: [Date]
@@ -229,7 +228,7 @@ Once we hit 100%, we buy the pallet and ship within 7 days.
 
 Tracking numbers will be sent within 24 hours
 
-Film your unboxing and tag us for a chance to win the next drop FREE 🎁
+Film your unboxing and tag us 🎁
 
 #UnboxingJUCHE
 ```

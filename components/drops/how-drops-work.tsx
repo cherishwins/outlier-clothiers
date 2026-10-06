@@ -11,18 +11,18 @@ const steps = [
   {
     icon: DollarSign,
     title: "You Pre-Order",
-    description: "Mystery boxes go live. You pay with Stars/TON. We only buy the pallet once funding goal is reached.",
+    description: "Mystery boxes go live. You pay with Stars, USDC or card. We only buy the pallet once the funding goal is reached.",
   },
   {
     icon: ShoppingCart,
     title: "Goal Reached = We Buy",
     description:
-      "Once enough boxes are pre-sold, we purchase the pallet. No inventory risk for us. Guaranteed value for you.",
+      "Once enough boxes are pre-sold before the deadline, we purchase the pallet. If not, deposits are refundable from the escrow contract.",
   },
   {
     icon: Truck,
     title: "We Ship Your Box",
-    description: "Pallet arrives, we randomly pack boxes from manifest, ship within 7-10 days. Film your unboxing!",
+    description: "Pallet arrives, we pack boxes at random from the manifest and ship them. Film your unboxing!",
   },
 ]
 
@@ -64,28 +64,28 @@ export function HowDropsWork() {
         <div className="mt-16 max-w-3xl mx-auto">
           <Card className="bg-card/50 border-primary/30 p-8 backdrop-blur-sm">
             <h3 className="font-serif text-2xl font-bold mb-4 text-center">
-              Why This <span className="text-primary">Model Wins</span>
+              What to <span className="text-primary">Know</span>
             </h3>
             <ul className="space-y-3 text-muted-foreground">
               <li className="flex items-start gap-3">
                 <span className="text-primary font-bold">•</span>
                 <span>
-                  <strong className="text-foreground">Zero inventory risk</strong> - We only buy after you've
-                  pre-ordered
+                  <strong className="text-foreground">Pre-order first</strong> - We only buy a load after its drop is
+                  funded
                 </span>
               </li>
               <li className="flex items-start gap-3">
                 <span className="text-primary font-bold">•</span>
                 <span>
-                  <strong className="text-foreground">Transparent value</strong> - Manifested pallets = you see retail
-                  prices before buying
+                  <strong className="text-foreground">Random contents</strong> - Each drop links its load&apos;s
+                  manifest, but what is in your box, and what it is worth, varies
                 </span>
               </li>
               <li className="flex items-start gap-3">
                 <span className="text-primary font-bold">•</span>
                 <span>
-                  <strong className="text-foreground">Community decides</strong> - Vote with your wallet on which
-                  pallets to unlock
+                  <strong className="text-foreground">Escrowed</strong> - Each box is a slot in the FlashCargo
+                  contract; a drop that is cancelled or not released by its deadline is refundable from it
                 </span>
               </li>
               <li className="flex items-start gap-3">

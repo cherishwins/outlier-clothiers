@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { Package, TrendingUp } from "lucide-react"
+import { Package, Send } from "lucide-react"
 import Image from "next/image"
 import Link from "next/link"
 
@@ -28,17 +28,17 @@ export function DropsHero() {
         </Badge>
 
         <h1 className="font-serif text-5xl md:text-7xl font-bold mb-6 text-balance">
-          <span className="text-primary">TREASURE HUNT</span>
+          <span className="text-primary">MYSTERY BOXES</span>
           <br />
-          <span className="text-foreground">AT 80% OFF</span>
+          <span className="text-foreground">FROM LIQUIDATION LOADS</span>
         </h1>
 
         <p className="text-xl md:text-2xl text-muted-foreground mb-8 max-w-3xl mx-auto text-pretty leading-relaxed">
-          We source liquidation pallets from canceled luxury orders. You pre-order mystery boxes. Once funded, we buy
-          the pallet and ship your box. Manifested inventory = you know the value range.
+          We find manifested liquidation loads. You pre-order mystery boxes. Once a drop is funded, we buy the load and
+          ship your box. Each drop links the manifest of the load it buys; box contents are random.
         </p>
 
-        <div className="flex flex-col sm:flex-row gap-4 justify-center mb-16">
+        <div className="flex flex-col sm:flex-row gap-4 justify-center">
           <a href="#active-drops">
             <Button size="lg" className="text-lg px-8 py-6 bg-primary hover:bg-primary/90 text-primary-foreground">
               <Package className="w-5 h-5 mr-2" />
@@ -51,25 +51,10 @@ export function DropsHero() {
               variant="outline"
               className="text-lg px-8 py-6 border-primary/30 hover:border-primary hover:bg-primary/10 bg-transparent"
             >
-              <TrendingUp className="w-5 h-5 mr-2" />
-              See Past Unboxings
+              <Send className="w-5 h-5 mr-2" />
+              Join on Telegram
             </Button>
           </a>
-        </div>
-
-        <div className="grid grid-cols-3 gap-8 max-w-3xl mx-auto">
-          <div className="text-center">
-            <div className="text-3xl md:text-4xl font-bold text-primary mb-2">80%</div>
-            <div className="text-sm text-muted-foreground uppercase tracking-wider">Below Retail</div>
-          </div>
-          <div className="text-center border-x border-border">
-            <div className="text-3xl md:text-4xl font-bold text-primary mb-2">0</div>
-            <div className="text-sm text-muted-foreground uppercase tracking-wider">Inventory Risk</div>
-          </div>
-          <div className="text-center">
-            <div className="text-3xl md:text-4xl font-bold text-primary mb-2">100%</div>
-            <div className="text-sm text-muted-foreground uppercase tracking-wider">Manifested</div>
-          </div>
         </div>
       </div>
     </section>
