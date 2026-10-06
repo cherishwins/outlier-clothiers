@@ -32,19 +32,22 @@
 
 ### Mystery Box Economics
 
-**Example: Hugo Boss Pallet**
+**Example: hypothetical pallet**
 - Pallet Cost: $45,000 (10,000 units)
 - Mystery Boxes: 100 @ $12 USD each
-- Revenue: $120,000
-- Profit: $75,000 (62.5% margin)
+- Revenue: $1,200
+- Profit: -$43,800 (loss)
 - Shipping: -$15,000 (est. $150/box)
-- **Net Profit: $60,000 (50% margin)**
+- **Net Profit: -$58,800 (loss)**
+
+At these inputs the example loses money. Covering the pallet and shipping
+across 100 boxes takes a box price of at least $600 ($60,000 / 100).
 
 ### Scaling Path
 
-**Month 1-3**: 2-3 pallets/month @ $10K profit each = $30K/month
-**Month 4-6**: 5-8 pallets/month @ $15K profit each = $90K/month
-**Month 7-12**: 10-15 pallets/month @ $20K profit each = $250K/month
+**Month 1-3**: 2-3 pallets/month @ $10K profit each = $20K-$30K/month
+**Month 4-6**: 5-8 pallets/month @ $15K profit each = $75K-$120K/month
+**Month 7-12**: 10-15 pallets/month @ $20K profit each = $200K-$300K/month
 
 ## Target Customers (ICP)
 
@@ -100,7 +103,7 @@
 
 ### Year 1 Target
 - Revenue: $1.2M
-- Net Profit: $500K (41% margin)
+- Net Profit: $500K (42% margin)
 - Pallets: 120 total (10/month avg)
 
 ## Risks & Mitigation
