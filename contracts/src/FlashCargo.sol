@@ -15,8 +15,13 @@ import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
  * Flow:
  * 1. Admin creates a drop with funding target and deadline
  * 2. Users buy slots (deposit USDC, receive NFT receipt)
- * 3. If target reached: Admin releases funds, NFTs become claim tickets
- * 4. If target NOT reached by deadline: Users can claim full refund
+ * 3. If target reached before the deadline: Admin releases funds, NFTs become claim tickets
+ * 4. If the drop is cancelled, or not released by the deadline: Users can claim full refund
+ *
+ * Release and refund are mutually exclusive: release is only possible before
+ * the deadline, refunds only after it (or after a cancel, which blocks
+ * release). raisedAmount always equals the drop's unrefunded deposits, so a
+ * release can never move another drop's funds.
  */
 contract FlashCargo is ERC721, Ownable, ReentrancyGuard {
     using SafeERC20 for IERC20;
@@ -107,11 +112,13 @@ contract FlashCargo is ERC721, Ownable, ReentrancyGuard {
     }
 
     /**
-     * @notice Release funds after successful funding
+     * @notice Release funds after successful funding. Only before the deadline.
      */
     function releaseFunds(uint256 dropId) external onlyOwner nonReentrant {
         Drop storage drop = drops[dropId];
         require(drop.status == DropStatus.FUNDING, "Not funding");
+        // From the deadline on, buyers may refund (claimRefund); the owner may not also release.
+        require(block.timestamp < drop.deadline, "Deadline passed");
         require(drop.raisedAmount >= drop.targetAmount, "Target not reached");
 
         drop.status = DropStatus.FUNDED;
@@ -197,6 +204,7 @@ contract FlashCargo is ERC721, Ownable, ReentrancyGuard {
         require(canRefund, "Refund not available");
 
         slot.refunded = true;
+        drop.raisedAmount -= slot.amount;
         usdc.safeTransfer(msg.sender, slot.amount);
 
         emit Refunded(tokenId, msg.sender, slot.amount);
