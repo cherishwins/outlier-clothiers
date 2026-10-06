@@ -1,6 +1,7 @@
 import { type NextRequest, NextResponse } from "next/server"
 import crypto from "crypto"
 import { safeEqual } from "@/lib/auth"
+import { parseDropId } from "@/lib/drop-id"
 
 // Coinbase Commerce webhook handler
 // Docs: https://docs.cloud.coinbase.com/commerce/docs/webhooks
@@ -138,6 +139,13 @@ async function handlePaymentConfirmed(event: CoinbaseWebhookEvent) {
     metadata,
   })
 
+  // Our own charge always carries drop_id (see /api/payment/coinbase). Drop 0
+  // is a real drop, so a missing id must not fall back to it.
+  const dropId = parseDropId(metadata.drop_id)
+  if (dropId === null) {
+    throw new Error(`charge ${data.id} has no valid drop_id in its metadata`)
+  }
+
   // Import settlement service dynamically to avoid circular deps
   const { settleOrder } = await import("@/lib/settlement")
 
@@ -154,7 +162,7 @@ async function handlePaymentConfirmed(event: CoinbaseWebhookEvent) {
 
     // Settle the order
     const order = await settleOrder({
-      dropId: metadata.drop_id ? parseInt(metadata.drop_id) : 0,
+      dropId,
       quantity: metadata.quantity ? parseInt(metadata.quantity) : 1,
       customerWallet: metadata.customer_wallet || `coinbase:${data.id}`,
       customerEmail: metadata.customer_email,

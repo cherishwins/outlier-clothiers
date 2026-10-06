@@ -1,4 +1,5 @@
 import { type NextRequest, NextResponse } from "next/server"
+import { parseDropId } from "@/lib/drop-id"
 import { quoteDrop } from "@/lib/pricing"
 
 interface CoinbasePaymentRequest {
@@ -26,13 +27,14 @@ export async function POST(request: NextRequest) {
       shippingAddress,
     } = body
 
-    const resolvedDropId = dropId ?? 0
+    // Drops are numbered from 0 on the contract; an absent dropId is not drop 0.
+    const resolvedDropId = parseDropId(dropId)
     const resolvedQuantity = quantity ?? 1
     const resolvedBoxType = boxType || "medium"
 
-    if (!Number.isFinite(resolvedDropId) || resolvedDropId <= 0) {
+    if (resolvedDropId === null) {
       return NextResponse.json(
-        { success: false, error: "dropId is required" },
+        { success: false, error: "dropId must be a non-negative integer" },
         { status: 400 }
       )
     }

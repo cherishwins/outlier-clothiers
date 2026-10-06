@@ -1,6 +1,7 @@
 import { createPublicClient, http } from "viem"
 import { base, baseSepolia } from "viem/chains"
 import { CONTRACTS, FLASH_CARGO_ABI } from "./contracts"
+import { parseDropId } from "./drop-id"
 
 interface QuoteDropParams {
   dropId: number
@@ -30,8 +31,8 @@ export interface DropState {
 
 export async function quoteDrop(params: QuoteDropParams): Promise<DropQuote> {
   const { dropId, quantity, isTestnet } = params
-  if (!Number.isFinite(dropId) || dropId <= 0) {
-    throw new Error("dropId must be a positive number")
+  if (parseDropId(dropId) === null) {
+    throw new Error("dropId must be a non-negative integer")
   }
   if (!Number.isFinite(quantity) || quantity <= 0) {
     throw new Error("quantity must be a positive number")
@@ -68,8 +69,8 @@ export async function quoteDrop(params: QuoteDropParams): Promise<DropQuote> {
 
 export async function readDropState(params: { dropId: number; isTestnet: boolean }): Promise<DropState> {
   const { dropId, isTestnet } = params
-  if (!Number.isFinite(dropId) || dropId <= 0) {
-    throw new Error("dropId must be a positive number")
+  if (parseDropId(dropId) === null) {
+    throw new Error("dropId must be a non-negative integer")
   }
 
   const chain = isTestnet ? baseSepolia : base

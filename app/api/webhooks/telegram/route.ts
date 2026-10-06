@@ -2,6 +2,7 @@ import { type NextRequest, NextResponse } from "next/server"
 import { DropStatus } from "@/lib/contracts"
 import { quoteDrop, readDropState, type DropQuote } from "@/lib/pricing"
 import { safeEqual } from "@/lib/auth"
+import { parseDropId } from "@/lib/drop-id"
 
 // Telegram Payment webhook handler
 // Handles pre_checkout_query and successful_payment events
@@ -275,7 +276,8 @@ async function validateOrder(
 
   const isTestnet = process.env.NEXT_PUBLIC_TESTNET === "true"
 
-  if (!Number.isFinite(payload.dropId) || payload.dropId <= 0) {
+  // Drop 0 is the contract's first drop.
+  if (parseDropId(payload.dropId) === null) {
     return { ok: false, error: "Invalid drop" }
   }
 

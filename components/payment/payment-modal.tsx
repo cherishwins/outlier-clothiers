@@ -17,7 +17,7 @@ interface PaymentModalProps {
     price: number // in Stars
     tonPrice: number
     usdPrice?: number
-    dropId?: number
+    dropId: number // contract drop id; drops are numbered from 0
     quantity?: number
     boxType?: "small" | "medium" | "large"
   }
@@ -35,7 +35,7 @@ export function PaymentModal({ isOpen, onClose, product, onPaymentSuccess }: Pay
 
   const quantity = product.quantity ?? 1
   const boxType = product.boxType ?? "medium"
-  const dropId = product.dropId ?? 0
+  const dropId = product.dropId
 
   // Calculate USD price (approximate: 1 Star ≈ $0.01 USD)
   const usdPriceNumber = typeof product.usdPrice === "number" ? product.usdPrice : product.price * 0.01

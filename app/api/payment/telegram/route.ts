@@ -1,4 +1,5 @@
 import { type NextRequest, NextResponse } from "next/server"
+import { parseDropId } from "@/lib/drop-id"
 import { quoteDrop } from "@/lib/pricing"
 
 const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN
@@ -36,12 +37,13 @@ export async function POST(request: NextRequest) {
       shippingAddress,
     } = body
 
-    const resolvedDropId = dropId ?? 0
+    // Drops are numbered from 0 on the contract; an absent dropId is not drop 0.
+    const resolvedDropId = parseDropId(dropId)
     const isTestnet = process.env.NEXT_PUBLIC_TESTNET === "true"
 
-    if (!Number.isFinite(resolvedDropId) || resolvedDropId <= 0) {
+    if (resolvedDropId === null) {
       return NextResponse.json(
-        { success: false, error: "dropId is required" },
+        { success: false, error: "dropId must be a non-negative integer" },
         { status: 400 }
       )
     }
@@ -90,7 +92,7 @@ export async function POST(request: NextRequest) {
 
     // Fallback: Return bot deep link for manual payment
     const botUsername = process.env.TELEGRAM_BOT_USERNAME || "OutlierClothiersBot"
-    const paymentUrl = `https://t.me/${botUsername}?start=pay_${boxType}_${quantity}_${dropId || 0}`
+    const paymentUrl = `https://t.me/${botUsername}?start=pay_${boxType}_${quantity}_${resolvedDropId}`
 
     return NextResponse.json({
       success: true,
