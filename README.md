@@ -1,4 +1,10 @@
-# OUTLIER CLOTHIERS
+# LEGACY: OUTLIER CLOTHIERS
+
+> **LEGACY REPOSITORY. Not under active development.**
+> The only active repo is **[cherishwins/x402-facilitator](https://github.com/cherishwins/x402-facilitator)**. Work there.
+> Liquidation pallet pre-order shop. No drop was ever created and it is not being pursued.
+> Marked legacy 20 October 2026 so this repo stops being opened by mistake. Archive it in Settings when convenient.
+
 
 > **Crypto-Native Flash DAO for Luxury Liquidation**
 >
